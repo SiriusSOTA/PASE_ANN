@@ -1,0 +1,1 @@
+/usr/bin/clang++  -g   CMakeFiles/test_ann_index.dir/test_parser.cpp.o CMakeFiles/test_ann_index.dir/test_pase_build.cpp.o CMakeFiles/test_ann_index.dir/common.cpp.o  -o test_ann_index   -L/src  -Wl,-rpath,/src /usr/lib/libboost_system.so.1.75.0 /usr/lib/libboost_filesystem.so.1.75.0 /usr/lib/libboost_unit_test_framework.so.1.75.0 

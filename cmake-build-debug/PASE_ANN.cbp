@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="PASE_ANN"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="clang"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\test\;CMake Files\..\;CMake Files\..\..\;CMake Files\..\..\..\;CMake Files\..\..\..\..\;CMake Files\..\..\..\..\..\;CMake Files\..\..\..\..\..\usr\;CMake Files\..\..\..\..\..\usr\lib64\;CMake Files\..\..\..\..\..\usr\lib64\cmake\;CMake Files\..\..\..\..\..\usr\lib64\cmake\Boost-1.75.0\;CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_headers-1.75.0\;CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_system-1.75.0\;CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_filesystem-1.75.0\;CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_unit_test_framework-1.75.0\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="test_ann_index">
+				<Option output="/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/test_ann_index" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir=""/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="clang"/>
+				<Compiler>
+					<Add option="-DBOOST_ALL_NO_LIB"/>
+					<Add option="-DBOOST_SYSTEM_DYN_LINK"/>
+					<Add option="-DBOOST_FILESYSTEM_DYN_LINK"/>
+					<Add option="-DBOOST_UNIT_TEST_FRAMEWORK_DYN_LINK"/>
+					<Add directory="/home/dmitry/MIPT/sirius/PASE_ANN/src"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0/backward"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/clang/11.1.0/include"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include-fixed"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 test_ann_index"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="test_ann_index/fast">
+				<Option output="/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/test_ann_index" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir=""/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="clang"/>
+				<Compiler>
+					<Add option="-DBOOST_ALL_NO_LIB"/>
+					<Add option="-DBOOST_SYSTEM_DYN_LINK"/>
+					<Add option="-DBOOST_FILESYSTEM_DYN_LINK"/>
+					<Add option="-DBOOST_UNIT_TEST_FRAMEWORK_DYN_LINK"/>
+					<Add directory="/home/dmitry/MIPT/sirius/PASE_ANN/src"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/bin/../lib64/gcc/x86_64-pc-linux-gnu/10.2.0/../../../../include/c++/10.2.0/backward"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/clang/11.1.0/include"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/10.2.0/include-fixed"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 test_ann_index/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug/test/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/test/common.cpp">
+			<Option target="test_ann_index"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/test/test_parser.cpp">
+			<Option target="test_ann_index"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/test/test_pase_build.cpp">
+			<Option target="test_ann_index"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/test/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\test\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/BoostDetectToolset-1.75.0.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/Boost-1.75.0/BoostConfig.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\Boost-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/Boost-1.75.0/BoostConfigVersion.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\Boost-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_headers-1.75.0/boost_headers-config-version.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_headers-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_headers-1.75.0/boost_headers-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_headers-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_system-1.75.0/boost_system-config-version.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_system-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_system-1.75.0/boost_system-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_system-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_system-1.75.0/libboost_system-variant-shared.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_system-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_system-1.75.0/libboost_system-variant-static.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_system-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_filesystem-1.75.0/boost_filesystem-config-version.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_filesystem-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_filesystem-1.75.0/boost_filesystem-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_filesystem-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_filesystem-1.75.0/libboost_filesystem-variant-shared.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_filesystem-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_filesystem-1.75.0/libboost_filesystem-variant-static.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_filesystem-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_unit_test_framework-1.75.0/boost_unit_test_framework-config-version.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_unit_test_framework-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_unit_test_framework-1.75.0/boost_unit_test_framework-config.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_unit_test_framework-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_unit_test_framework-1.75.0/libboost_unit_test_framework-variant-shared.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_unit_test_framework-1.75.0\"/>
+		</Unit>
+		<Unit filename="/home/dmitry/MIPT/sirius/PASE_ANN/../../../../../usr/lib64/cmake/boost_unit_test_framework-1.75.0/libboost_unit_test_framework-variant-static.cmake">
+			<Option virtualFolder="CMake Files\..\..\..\..\..\usr\lib64\cmake\boost_unit_test_framework-1.75.0\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

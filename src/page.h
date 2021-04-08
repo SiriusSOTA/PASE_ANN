@@ -6,7 +6,7 @@ static size_t PAGE_SIZE = 8192;  // 8 KB
 template<typename T>
 struct Page {
     std::vector <T> tuples;
-    Page<T> *nextPage;
+    Page<T> *nextPage = nullptr;
 
     Page() : tuples(calcTuplesSize()) {}
 

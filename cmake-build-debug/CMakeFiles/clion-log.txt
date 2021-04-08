@@ -1,0 +1,4 @@
+/home/dmitry/devs/clion-2020.2.3/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -G "CodeBlocks - Unix Makefiles" /home/dmitry/MIPT/sirius/PASE_ANN
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/dmitry/MIPT/sirius/PASE_ANN/cmake-build-debug
