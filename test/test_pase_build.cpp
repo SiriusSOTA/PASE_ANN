@@ -11,11 +11,12 @@ BOOST_AUTO_TEST_SUITE(TestPages)
         size_t centroidTuplesPerPage = 204;
         BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
 
-        PaseIVFFlat<float> pase(128);
+        PaseIVFFlat<float> pase(128, 20);
         Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", 128, 10000);
-        auto parsed = parser.parse();
+        std::vector<std::vector<float>> parsed = parser.parse();
+        std::vector<std::reference_wrapper<std::vector<float>>> postparsed(parsed.begin(), parsed.end());
         for (size_t i = 0; i < centroidTuplesPerPage + 10; ++i) {
-            pase.addCentroid(parsed, parsed[i]);
+            pase.addCentroid(postparsed, parsed[i]);
         }
 
         BOOST_TEST(pase.firstCentroidPage->tuples[0].vec == parsed[0]);
