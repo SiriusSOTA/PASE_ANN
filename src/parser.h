@@ -1,5 +1,7 @@
 #include <string>
 #include <fstream>
+#include <vector>
+#include <cstring>
 
 
 template<typename T>

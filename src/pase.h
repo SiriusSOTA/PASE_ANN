@@ -48,4 +48,8 @@ struct PaseIVFFlat {
         lastCentroidElemIt->firstDataPage = firstDataPage;
         lastCentroidElemIt += 1;
     }
+
+    void search(const std::vector<T>& vec, size_t neighbours, size_t n_clusters) {
+
+    }
 };

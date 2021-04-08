@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 
 find_package(Boost REQUIRED COMPONENTS system filesystem unit_test_framework)
-link_directories(../src)
+link_directories(/src)
 
 add_executable(test_ann_index test_parser.cpp test_pase_build.cpp common.cpp )
 
