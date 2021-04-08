@@ -51,6 +51,7 @@ struct PaseIVFFlat {
 
     void search(const std::vector<T> &vec, size_t neighbours, size_t n_clusters) {
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
+        using VecWithDist = std::pair<T*, float>;
 
         std::vector<CentrWithDist> centr_dists;
 
@@ -64,9 +65,8 @@ struct PaseIVFFlat {
         for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
             for (const CentroidTuple<T> &c_tuple: it->tuples) {
                 const std::vector<T> &centroid = c_tuple.vec;
-                //min may be not the best option for sorting size, but it won't crash
                 centr_dists.emplace_back(&c_tuple, distanceCounter(c_tuple.vec.data(), vec.data(),
-                                                                   std::min(vec.size(), c_tuple.vec.size())));
+                                                                   std::min(vec.size(), dimension)));
             }
         }
 
@@ -75,20 +75,37 @@ struct PaseIVFFlat {
             return lhs.second < rhs.second;
         });
 
-        std::vector<CentroidTuple<T>> top_clusters;
-        for (auto cl_pair: centr_dists) {
-            //TODO: take top_k centroid_tuple
+        std::vector<CentroidTuple<T> *> top_clusters(n_clusters);
+        for (size_t i = 0; i < n_clusters; ++i) {
+            top_clusters[i] = centr_dists[i].first;
         }
 
-        for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
-            for (const CentroidTuple<T> &c_tuple: it->tuples) {
-                const std::vector<T> &centroid = c_tuple.vec;
-                for (DataPage<T> *pg = c_tuple.firstDataPage; pg != nullptr; pg = pg->nextPage) {
+        std::vector<const VecWithDist> top_vectors;
 
+        for (CentroidTuple<T> *cluster: top_clusters) {
+            size_t vectors_left = cluster->vectorCount;
+            for (DataPage<T> pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
+                size_t vec_on_page = std::min(pg.calcTuplesSize() / dimension, vectors_left);
+                vectors_left -= vec_on_page;
+                for (size_t i = 0; i < vec_on_page; ++i) {
+                    top_vectors.emplace_back(pg->tuples.data() + i * dimension, 0);
                 }
             }
         }
+
+        for (VecWithDist& v_dist: top_vectors) {
+            v_dist.second = distanceCounter(vec.data(), v_dist.first, dimension);
+        }
+
+        std::sort(top_vectors.begin(), top_vectors.end(), [](const VecWithDist &lhs, const VecWithDist &rhs) {
+           return lhs.second < rhs.second;
+        });
+
+        std::vector<std::vector<T>> result(neighbours);
+        for (size_t i = 0; i < neighbours; ++i) {
+            result[i] = std::vector<T>(top_vectors[i].first, top_vectors[i].first + dimension);
+        }
+        return result;
     }
-
-
+    
 };
