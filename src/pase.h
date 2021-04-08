@@ -1,7 +1,7 @@
 #include "page.h"
 #include <vector>
 #include <stdexcept>
-
+#include <algorithm>
 
 template<typename T>
 struct PaseIVFFlat {
@@ -16,7 +16,7 @@ struct PaseIVFFlat {
         }
     }
 
-    void addCentroid(std::vector<std::vector<T>>& data, std::vector<T>& centroidVector) {
+    void addCentroid(std::vector<std::vector<T>> &data, std::vector<T> &centroidVector) {
         auto *firstDataPage = new DataPage<T>();
         DataPage<T> *lastDataPage = firstDataPage;
         auto lastDataElemIt = lastDataPage->tuples.begin();
@@ -49,7 +49,46 @@ struct PaseIVFFlat {
         lastCentroidElemIt += 1;
     }
 
-    void search(const std::vector<T>& vec, size_t neighbours, size_t n_clusters) {
+    void search(const std::vector<T> &vec, size_t neighbours, size_t n_clusters) {
+        using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
 
+        std::vector<CentrWithDist> centr_dists;
+
+        auto distanceCounter = [](T *l, T *r, size_t size) {
+            float result = 0;
+            for (uint32_t i = 0; i < size; ++i) {
+                result += (r[i] - l[i]) * (r[i] - l[i]);
+            }
+            return result;
+        };
+        for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
+            for (const CentroidTuple<T> &c_tuple: it->tuples) {
+                const std::vector<T> &centroid = c_tuple.vec;
+                //min may be not the best option for sorting size, but it won't crash
+                centr_dists.emplace_back(&c_tuple, distanceCounter(c_tuple.vec.data(), vec.data(),
+                                                                   std::min(vec.size(), c_tuple.vec.size())));
+            }
+        }
+
+        //TODO: find/implement a faster way to sort
+        std::sort(centr_dists.begin(), centr_dists.end(), [](const CentrWithDist &lhs, const CentrWithDist &rhs) {
+            return lhs.second < rhs.second;
+        });
+
+        std::vector<CentroidTuple<T>> top_clusters;
+        for (auto cl_pair: centr_dists) {
+            //TODO: take top_k centroid_tuple
+        }
+
+        for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
+            for (const CentroidTuple<T> &c_tuple: it->tuples) {
+                const std::vector<T> &centroid = c_tuple.vec;
+                for (DataPage<T> *pg = c_tuple.firstDataPage; pg != nullptr; pg = pg->nextPage) {
+
+                }
+            }
+        }
     }
+
+
 };
