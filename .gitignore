@@ -33,6 +33,7 @@
 
 # CLion files
 cmake-build-*/
+.idea/
 
 # Mac
 .DS_Store
