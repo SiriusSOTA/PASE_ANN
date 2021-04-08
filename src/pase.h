@@ -1,5 +1,8 @@
 #include "page.h"
+#include "parser.h"
+#include <functional>
 #include <vector>
+#include <random>
 #include <stdexcept>
 #include <algorithm>
 
@@ -15,39 +18,128 @@ struct PaseIVFFlat {
             throw std::logic_error("Vector size is too big. Even one vector can not be stored on 8 KB page.");
         }
     }
+    private:
+        void addCentroid(std::vector<std::reference_wrapper<std::vector<T>>>& data, std::vector<T>& centroidVector) {
+            auto *firstDataPage = new DataPage<T>();
+            DataPage<T> *lastDataPage = firstDataPage;
+            auto lastDataElemIt = lastDataPage->tuples.begin();
 
-    void addCentroid(std::vector<std::vector<T>> &data, std::vector<T> &centroidVector) {
-        auto *firstDataPage = new DataPage<T>();
-        DataPage<T> *lastDataPage = firstDataPage;
-        auto lastDataElemIt = lastDataPage->tuples.begin();
+            for (auto &vec: data) {
+                lastDataElemIt = std::copy(vec.begin(), vec.end(), lastDataElemIt);
+                if (lastDataElemIt > lastDataPage->tuples.end() - dimension) {
+                    auto newDataPage = new DataPage<T>();
+                    lastDataPage->nextPage = newDataPage;
+                    lastDataPage = newDataPage;
+                    lastDataElemIt = lastDataPage->tuples.begin();
+                }
+            }
 
-        for (auto &vec: data) {
-            lastDataElemIt = std::copy(vec.begin(), vec.end(), lastDataElemIt);
-            if (lastDataElemIt > lastDataPage->tuples.end() - dimension) {
-                auto newDataPage = new DataPage<T>();
-                lastDataPage->nextPage = newDataPage;
-                lastDataPage = newDataPage;
-                lastDataElemIt = lastDataPage->tuples.begin();
+            if (!firstCentroidPage) {
+                firstCentroidPage = new CentroidPage<T>();
+                lastCentroidPage = firstCentroidPage;
+                lastCentroidElemIt = firstCentroidPage->tuples.begin();
+            }
+
+            if (lastCentroidElemIt == lastCentroidPage->tuples.end()) {
+                auto newCentroidPage = new CentroidPage<T>();
+                lastCentroidPage->nextPage = newCentroidPage;
+                lastCentroidPage = newCentroidPage;
+                lastCentroidElemIt = lastCentroidPage->tuples.begin();
+            }
+            lastCentroidElemIt->vec = centroidVector;
+            lastCentroidElemIt->vectorCount = data.size();
+            lastCentroidElemIt->firstDataPage = firstDataPage;
+            lastCentroidElemIt += 1;
+        }
+    public:
+        void makeCentroid(std::vector<std::vector<T>>>& points, size_t epochs) {
+            kMeans(points, clusters, epochs); 
+        }
+};
+
+template <typename T>
+double distance(std::vector<T>& x, std::vector<T>& y) {
+    size_t dimension = x.size();
+    double dist = 0;
+    for (size_t i = 0; i < dimension; ++i) {
+        dist += (static_cast<double>(x[i]) - static_cast<double>(y[i])) * 
+                (static_cast<double>(x[i]) - static_cast<double>(y[i]));
+    }
+    return dist;
+}
+
+template <typename T>
+void kMeans(std::vector<std::vector<T>>& points, size_t clusters, size_t epochs){
+    //инициализация 
+    std::mt19937 generator(time(0));
+    size_t num = points.size();
+    size_t dim = points[0].size();
+    //создание вектора центроидов
+    std::vector<std::vector<T>> centroids();
+    std::vector<double> minDist(points.size(), __DBL_MAX__);
+    std::vector<int>& cluster(points.size(), 0);
+    for (size_t i = 0; i < clusters; ++i) {
+        centroids.push_back(points[generator() % num]);
+    }
+    while (epochs--) {
+        //соотнесение точки с кластером
+        assigningPoints(centroids, points, minDist, cluster);
+        //пересчёт
+        computingPoints(centroids, points, minDist, cluster, dim, clusters);
+    }
+    std::vector<std::vector<std::reference_wrapper<std::vector<T>>>> data;
+    for (size_t i = 0; i < points.size(); ++i) {
+        std::reference_wrapper = &points[i];
+        data[cluster[i]].push_back(std::ref(points[i]>));
+    }
+    for (size_t i = 0; i < clusters; ++i) {
+        addCentroid(data[i], cluster[i]);
+    }
+}
+
+
+template <typename T>
+void assigningPoints(std::vector<std::vector<T>>& centroids, std::vector<std::vector<T>>& points, 
+                                                                    std::vector<double>& minDist, 
+                                                                       std::vector<int>& cluster) {
+    for (size_t i = 0; i < centroids.size(); ++i) {
+        int cluster_id = i;
+        for (size_t j = 0; j < points.size(); ++j) {    
+            //посчитали расстояние до текущего кластера
+            double dist = distance(centroids[i], points[j]);
+            //проверяем расстояние
+            if (dist < minDist[j]) {
+                minDist[j] = dist;
+                cluster[j] = cluster_id;
             }
         }
-
-        if (!firstCentroidPage) {
-            firstCentroidPage = new CentroidPage<T>();
-            lastCentroidPage = firstCentroidPage;
-            lastCentroidElemIt = firstCentroidPage->tuples.begin();
-        }
-
-        if (lastCentroidElemIt == lastCentroidPage->tuples.end()) {
-            auto newCentroidPage = new CentroidPage<T>();
-            lastCentroidPage->nextPage = newCentroidPage;
-            lastCentroidPage = newCentroidPage;
-            lastCentroidElemIt = lastCentroidPage->tuples.begin();
-        }
-        lastCentroidElemIt->vec = centroidVector;
-        lastCentroidElemIt->vectorCount = data.size();
-        lastCentroidElemIt->firstDataPage = firstDataPage;
-        lastCentroidElemIt += 1;
     }
+}
+
+template <typename T>
+void computingPoints(std::vector<std::vector<T>>& centroids, std::vector<std::vector<T>>& points, 
+                                                                    std::vector<double>& minDist, 
+                                                                       std::vector<int>& cluster,
+                                                                  size_t dimension, int clusters) {
+    //обновление и рассчёт
+    std::vector<int> newPoints(k, 0);
+    std::vector<std::vector<double>> sum(clusters, std::vector<double>(dimension, 0.0));
+    for (size_t j = 0; j < points.size(); ++j) {
+        int clusterId = cluster[j];
+        newPoints[clusterId]++;
+        for (size_t i = 0; i < points[j].size(); ++i) {
+            sum[cluster_id][i] += static_cast<double>(points[j][i]);
+        }
+        minDist[j] = __DBL_MAX__;  
+    }
+    //новые центроиды
+    for (size_t i = 0; i < centroids.size(); ++i) {
+        int cluster_id = i;
+        for (size_t j = 0; j < centroids[i].size(); ++j) {
+            centroids[i][j] = static_cast<T>(sum[cluster_id][j] / new_points[cluster_id]);
+        }
+    }
+}
 
     void search(const std::vector<T> &vec, size_t neighbours, size_t n_clusters) {
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
@@ -109,3 +201,4 @@ struct PaseIVFFlat {
     }
     
 };
+
