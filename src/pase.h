@@ -26,12 +26,16 @@ struct PaseIVFFlat {
 
     ~PaseIVFFlat() {
         auto curCentroidPage = firstCentroidPage;
+        if (curCentroidPage == nullptr) {
+            return;
+        }
         CentroidPage<T> *nextCentroidPage = nullptr;
         while (curCentroidPage->hasNextPage()) {
             nextCentroidPage = curCentroidPage->nextPage;
             delete curCentroidPage;
             curCentroidPage = nextCentroidPage;
         }
+        delete curCentroidPage;
     }
 
 private:
