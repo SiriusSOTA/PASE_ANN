@@ -126,9 +126,9 @@ private:
         auto distanceCounter = [](const T *l, const T *r, const size_t size) {
             float result = 0;
             for (uint32_t i = 0; i < size; ++i) {
-                result += (r[i] - l[i]) * (r[i] - l[i]);
+                result += static_cast<float>(r[i] - l[i]) * static_cast<float>(r[i] - l[i]);
             }
-            return result;
+            return sqrtf(result);
         };
 
         size_t clustersLeft = clusterCount;
