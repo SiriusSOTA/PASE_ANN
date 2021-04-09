@@ -34,9 +34,14 @@ BOOST_AUTO_TEST_SUITE(TestPages)
 
         size_t vectorCountPerDataPage = Page<float>::calcVectorCount(dimension);
         size_t lastPageVectorCount = parsed.size() - vectorCountPerDataPage * dataPageCount;
+        auto nextIdsPtr = (u_int32_t*)&(*lastDataPage->getEndTuples(dimension));
 
         for (size_t i = 0; i < parsed[0].size(); ++i) {
             BOOST_TEST(lastDataPage->tuples[(lastPageVectorCount - 1) * parsed[0].size() + i] == parsed[parsed.size() - 1][i]);
+        }
+        for (size_t i = 0; i < lastPageVectorCount; ++i) {
+            BOOST_TEST(*(nextIdsPtr) == parsed.size() - lastPageVectorCount + i);
+            nextIdsPtr += 4;
         }
 
         auto nextCentroidPage = pase.firstCentroidPage->nextPage;

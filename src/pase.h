@@ -103,7 +103,7 @@ public:
         DataPage<T> *lastDataPage = firstDataPage;
         auto lastDataElemIt = lastDataPage->tuples.begin();
         auto endTuplesIt = lastDataPage->getEndTuples(dimension);
-        auto nextIdPtr = &(*endTuplesIt);
+        auto nextIdPtr = (u_int32_t*)&(*endTuplesIt);
 
         for (size_t i = 0; i < data.size(); ++i) {
             auto& vec = data[i];
@@ -117,7 +117,7 @@ public:
                 lastDataPage = newDataPage;
                 lastDataElemIt = lastDataPage->tuples.begin();
                 endTuplesIt = lastDataPage->getEndTuples(dimension);
-                nextIdPtr = &(*endTuplesIt);
+                nextIdPtr = (u_int32_t*)&(*endTuplesIt);
             }
         }
 
