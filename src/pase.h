@@ -39,9 +39,9 @@ struct PaseIVFFlat {
     }
 
     void addCentroid(
-            std::vector<std::reference_wrapper<std::vector<T>>> &data,
-            std::vector<u_int32_t> &ids,
-            std::vector<T> &centroidVector) {
+            const std::vector<std::reference_wrapper<const std::vector<T>>> &data,
+            const std::vector<u_int32_t> &ids,
+            const std::vector<T> &centroidVector) {
         auto *firstDataPage = new DataPage<T>();
         DataPage<T> *lastDataPage = firstDataPage;
         auto lastDataElemIt = lastDataPage->tuples.begin();
@@ -82,7 +82,7 @@ struct PaseIVFFlat {
         lastCentroidElemIt += 1;
     }
 
-    void train(std::vector<std::vector<T>> &points, size_t maxEpochs, float tol) {
+    void train(const std::vector<std::vector<T>> &points, size_t maxEpochs, float tol) {
         IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
 
         // all vectors have the same length
@@ -90,6 +90,20 @@ struct PaseIVFFlat {
             addCentroid(data.clusters[i], data.idClusters[i], data.centroids[i]);
         }
     }
+
+    void add(const std::vector<std::vector<T>> &points, const std::vector<std::vector<T>>* clusters) {
+        if (clusters->size() != clusterCount) {
+            throw std::runtime_error("Inconsistent cluster size!");
+        }
+        size_t pointsCount = points.size();
+        std::vector<std::vector<u_int32_t>> idClusters(clusterCount);
+        for (size_t p = 0; p < pointsCount; ++p) {
+            for (size_t cl = 0; cl < clusterCount; ++cl) {
+                //TODO: IMPLEMENT THIS!
+            }
+        }
+    }
+
 
     std::vector<std::vector<T>>
     findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
