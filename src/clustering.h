@@ -7,6 +7,9 @@
 #include <limits>
 #include <chrono>
 
+// debug
+#include <iostream>
+
 template<typename T>
 struct IVFFlatClusterData {
     std::vector<std::vector<std::reference_wrapper<const std::vector<T>>>> clusters;
@@ -18,7 +21,7 @@ struct IVFFlatClusterData {
 
     }
 
-    // noncopyable on efficiency purposes
+    // noncopyable for efficiency purposes
     IVFFlatClusterData(const IVFFlatClusterData &) = delete;
 
     IVFFlatClusterData &operator=(const IVFFlatClusterData &) = delete;
@@ -92,7 +95,6 @@ float computePoints(std::vector<std::vector<float>> &centroids, const std::vecto
     // updating and computing
     auto clusterCount = static_cast<u_int32_t>(centroids.size());
     std::vector<u_int32_t> newPoints(clusterCount, 0);
-    // not checking if points is empty
     size_t dimension = points.at(0).size();
     std::vector<std::vector<float>> sum(clusterCount, std::vector<float>(dimension, 0.0));
     for (size_t j = 0; j < points.size(); ++j) {
@@ -118,7 +120,6 @@ float computePoints(std::vector<std::vector<float>> &centroids, const std::vecto
     return frobeniusNorm;
 }
 
-//TODO: std::cref and const reference for points - after search debugging
 template<typename T>
 IVFFlatClusterData<T>
 kMeans(const std::vector<std::vector<T>> &points, size_t clusterCount, size_t maxEpochs, float tol) {
@@ -135,9 +136,9 @@ kMeans(const std::vector<std::vector<T>> &points, size_t clusterCount, size_t ma
     }
 
     while (maxEpochs--) {
-        //assign cluster to points
+        // assign cluster to points
         assignPoints(centroids, points, minSquaredDist, pointsId);
-        //recompute points
+        // recompute points
         float frobeniusNorm = computePoints(centroids, points, minSquaredDist, pointsId);
         if (frobeniusNorm < tol) {
             break;
