@@ -16,11 +16,11 @@ struct Page {
     static size_t calcVectorCount(size_t dimension) {
         return calcTuplesSize() * sizeof(T) / (sizeof(T) * dimension + 4);
     }
-    inline bool hasNextPage() {
+    inline bool hasNextPage() const {
         return nextPage != nullptr;
     }
-    inline typename std::vector<T>::iterator getEndTuples(size_t dimension) {
-        return tuples.begin() + calcVectorCount(dimension) * dimension;
+    inline typename std::vector<T>::const_iterator getEndTuples(size_t dimension) const {
+        return tuples.cbegin() + calcVectorCount(dimension) * dimension;
     }
 };
 
