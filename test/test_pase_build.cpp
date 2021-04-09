@@ -6,7 +6,7 @@
 
 BOOST_AUTO_TEST_SUITE(TestPages)
 
-    BOOST_AUTO_TEST_CASE(test_fill_dummy_pages)
+    BOOST_AUTO_TEST_CASE(TestFillDummyPages)
     {
         const size_t centroidTuplesPerPage = 204;
         const size_t dimension = 128;

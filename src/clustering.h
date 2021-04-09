@@ -140,6 +140,7 @@ kMeans(const std::vector<std::vector<T>> &points, size_t clusterCount, size_t ma
         assignPoints(centroids, points, minSquaredDist, pointsId);
         // recompute points
         float frobeniusNorm = computePoints(centroids, points, minSquaredDist, pointsId);
+        std::cout << frobeniusNorm << std::endl;
         if (frobeniusNorm < tol) {
             break;
         }
