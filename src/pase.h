@@ -131,10 +131,12 @@ private:
             return result;
         };
 
-        for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
-            for (const CentroidTuple<T> &c_tuple: it->tuples) {
-                const std::vector<T> &centroid = c_tuple.vec;
-                centrDists.emplace_back(&c_tuple, distanceCounter(c_tuple.vec.data(), vec.data(),
+        size_t clustersLeft = clusterCount;
+        for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
+            size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
+            for (size_t i = 0; i < centroidCountOnPage; ++i) {
+                const auto& centroid = pg->tuples[i];
+                centrDists.emplace_back(&centroid, distanceCounter(centroid.vec.data(), vec.data(),
                                                                   std::min(vec.size(), dimension)));
             }
         }
@@ -153,7 +155,7 @@ private:
 
         for (const CentroidTuple<T> *cluster: topClusters) {
             size_t vectorsLeft = cluster->vectorCount;
-            for (const DataPage<T> *pg = cluster->firstDataPage; pg->hasNextPage(); pg = pg->nextPage) {
+            for (const DataPage<T> *pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
                 size_t vectorsCountOnPage = std::min(pg->calcVectorCount(dimension), vectorsLeft);
                 auto nextIdPtr = (u_int32_t *) &(*pg->getEndTuples(dimension));
                 vectorsLeft -= vectorsCountOnPage;
