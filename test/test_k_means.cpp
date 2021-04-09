@@ -22,16 +22,18 @@ BOOST_AUTO_TEST_CASE(JustWorks) {
 BOOST_AUTO_TEST_CASE(BuildPages) {
     const size_t centroidTuplesPerPage = 204;
     const size_t dimension = 128;
-    const size_t clusterCount = 30;
+    const size_t clusterCount = 100;
     const size_t epochs = 100;
     const float tol = 1e-4;
 
     BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
 
-    PaseIVFFlat<float> pase(dimension, 20);
+    PaseIVFFlat<float> pase(dimension, clusterCount);
     Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
     std::vector<std::vector<float>> parsed = parser.parse();
+    Timer t;
     IVFFlatClusterData<float> clusterData = kMeans<float>(parsed, clusterCount, epochs, tol);
+    std::cout << "KMeans done in " << t.elapsed() << " seconds" << std::endl;
 }
 
 //BOOST_AUTO_TEST_CASE(test_centroids_build_int) {
