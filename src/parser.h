@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <fstream>
 #include <vector>
@@ -15,8 +16,8 @@ public:
     explicit Parser(std::string pathToFile, size_t dimension, size_t vectorCount)
             : pathToFile(std::move(pathToFile)), dimension(dimension), vectorCount(vectorCount) {}
 
-    std::vector<std::vector<T>> parse() {
-        std::vector<std::vector<T>> result(vectorCount);
+    std::vector<const std::vector<T>> parse() {
+        std::vector<const std::vector<T>> result;
         std::ifstream data(pathToFile, std::ios::binary);
         if (!data.is_open()) {
             throw std::runtime_error("Failed to open file '" + pathToFile + "'.");
@@ -24,11 +25,12 @@ public:
 
         char buf[sizeof(T) * dimension + 4];
         for (int i = 0; i < vectorCount; ++i) {
-            result[i] = std::vector<T>(dimension);
+            auto res = std::vector<T>(dimension);
             data.read(buf, sizeof(buf));
             for (int j = 0; j < dimension; ++j) {
-                std::memcpy(&result[i][j], buf + 4 + j * sizeof(T), sizeof(T));
+                std::memcpy(&res[j], buf + 4 + j * sizeof(T), sizeof(T));
             }
+            result.emplace_back(std::move(res));
         }
         return result;
     }

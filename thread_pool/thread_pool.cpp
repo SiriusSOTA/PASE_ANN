@@ -23,7 +23,7 @@ void ThreadPool::Join() {
         return;
     }
     work_guard_.reset();
-    for (auto& worker : workers_) {
+    for (auto &worker : workers_) {
         worker.join();
     }
     joined_ = true;

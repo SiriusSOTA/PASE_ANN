@@ -1,13 +1,14 @@
 #ifndef PASE_ANN_CLUSTERING_H
 #define PASE_ANN_CLUSTERING_H
 
+#include "thread_pool.h"
 #include <vector>
 #include <random>
 #include <functional>
 #include <limits>
 #include <chrono>
 #include <random>
-#include "thread_pool.h"
+#include <set>
 
 // debug
 #include <iostream>
@@ -57,58 +58,79 @@ float distance(const std::vector<T> &x, const std::vector<U> &y) {
 //TODO: kmeans++ initialization support
 template<typename T>
 std::vector<std::vector<T>>
-kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMeansSamplingMode mode) {
+kMeansSample(const std::vector<const std::vector<T>> &points, const size_t clusterCount,
+             const kMeansSamplingMode mode) {
     if (clusterCount == 0) {
         return std::vector<std::vector<T>>();
     }
     size_t pointsCount = points.size();
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::mt19937 gen(seed);
+    thread_local std::mt19937 gen(seed);
     std::vector<std::vector<T>> clusters(clusterCount);
+    std::set<size_t> clustersId;
+    size_t index{};
     if (mode == kMeansSamplingMode::kNormal) {
         for (auto &cluster: clusters) {
-            cluster = points[gen() % pointsCount];
+            while (true) {
+                index = gen() % pointsCount;
+                if (clustersId.count(index) == 0) {
+                    break;
+                }
+            }
+            cluster = points[index];
+            clustersId.insert(index);
         }
     } else if (mode == kMeansSamplingMode::kPlusplus) {
-        std::vector<float> sqDistSum(pointsCount);
-        clusters[0] = points[gen() % pointsCount];
-        for (size_t i = 0; i < pointsCount; ++i) {
-            sqDistSum[i] += squaredDistance(clusters[0], points[i]);
-        }
-        std::discrete_distribution distanceDistribution(sqDistSum.begin(), sqDistSum.end());
-        for (size_t i = 1; i < clusterCount; ++i) {
-            //working
+        // epsilon for kMeans distance
+        std::vector<float> sqDistSum(pointsCount, 1e-6);
+
+        // cycling till the end, probas ~ squared distances sum
+        thread_local std::discrete_distribution distanceDistribution(sqDistSum.begin(), sqDistSum.end());
+        for (auto &cluster : clusters) {
+            while (true) {
+                index = distanceDistribution(gen);
+                if (clustersId.count(index) == 0) {
+                    break;
+                }
+            }
+            clustersId.insert(index);
+            cluster = points[index];
+            for (size_t j = 0; j < pointsCount; ++j) {
+                sqDistSum[j] += squaredDistance(points[j], cluster);
+            }
+            distanceDistribution = std::discrete_distribution(sqDistSum.begin(), sqDistSum.end());
         }
     }
     return clusters;
 }
 
 template<typename T>
-void assignPoints(const std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
+void assignPoints(const std::vector<std::vector<float>> &centroids, const std::vector<const std::vector<T>> &points,
                   std::vector<float> &minSquaredDist,
                   std::vector<u_int32_t> &cluster) {
-    for (size_t i = 0; i < centroids.size(); ++i) {
-        u_int32_t clusterId = i;
 
-        auto &threadPool = getThreadPool();
+    // TODO: make one thread pool per program.
+    // TODO: implement waiting for specific tasks.
+    ThreadPool threadPool;
+    for (size_t j = 0; j < points.size(); ++j) {
 
-//        threadPool.Submit([&]() {
-            for (size_t j = 0; j < points.size(); ++j) {
+        threadPool.Submit([&centroids, &minSquaredDist, &cluster, &points, j]() {
+            for (size_t i = 0; i < centroids.size(); ++i) {
                 // computed distance to current cluster
                 float dist = squaredDistance(centroids[i], points[j]);
                 // checking if distance is smaller
                 if (dist < minSquaredDist[j]) {
                     minSquaredDist[j] = dist;
-                    cluster[j] = clusterId;
+                    cluster[j] = i;
                 }
             }
-//        });
-//        threadPool.Join();
+        });
     }
+    threadPool.Join();
 }
 
 template<typename T>
-float computePoints(std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
+float computePoints(std::vector<std::vector<float>> &centroids, const std::vector<const std::vector<T>> &points,
                     std::vector<float> &minSquaredDist,
                     std::vector<u_int32_t> &cluster) {
     // updating and computing
@@ -141,26 +163,28 @@ float computePoints(std::vector<std::vector<float>> &centroids, const std::vecto
 
 template<typename T>
 IVFFlatClusterData<T>
-kMeans(const std::vector<std::vector<T>> &points, size_t clusterCount, size_t maxEpochs, float tol) {
+kMeans(const std::vector<const std::vector<T>> &points, const size_t clusterCount, const size_t maxEpochs,
+       const float tol) {
 
     std::vector<u_int32_t> pointsId(points.size(), 0);
     std::vector<float> minSquaredDist(points.size(), std::numeric_limits<float>::max());
     IVFFlatClusterData<T> data(clusterCount);
 
-    data.centroids = kMeansSample(points, clusterCount, kMeansSamplingMode::kNormal);
+    data.centroids = kMeansSample(points, clusterCount, kMeansSamplingMode::kPlusplus);
 
     std::vector<std::vector<float>> centroids(data.centroids.size());
     for (size_t i = 0; i < centroids.size(); ++i) {
         centroids[i] = std::vector<float>(data.centroids[i].begin(), data.centroids[i].end());
     }
 
-    while (maxEpochs--) {
+    for (size_t i = 0; i < maxEpochs; ++i) {
         // assign cluster to points
         assignPoints(centroids, points, minSquaredDist, pointsId);
         // recompute points
         float frobeniusNorm = computePoints(centroids, points, minSquaredDist, pointsId);
         std::cout << frobeniusNorm << std::endl;
         if (frobeniusNorm < tol) {
+            std::cout << i + 1 << " epochs passed!" << std::endl;
             break;
         }
     }

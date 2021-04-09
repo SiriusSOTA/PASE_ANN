@@ -11,10 +11,12 @@ using Task = std::function<void()>;
 class ThreadPool {
 public:
     ThreadPool();
+
     ~ThreadPool();
 
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool& operator=(const ThreadPool&) = delete;
+    ThreadPool(const ThreadPool &) = delete;
+
+    ThreadPool &operator=(const ThreadPool &) = delete;
 
     void Submit(Task task);
 
@@ -32,7 +34,7 @@ private:
     bool joined_{false};
 };
 
-static ThreadPool& getThreadPool() {
-    static ThreadPool threadPool;
-    return threadPool;
-}
+//static ThreadPool& getThreadPool() {
+//    static ThreadPool threadPool;
+//    return threadPool;
+//}
