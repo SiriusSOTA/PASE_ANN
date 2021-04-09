@@ -34,10 +34,11 @@ BOOST_AUTO_TEST_SUITE(TestPages)
 
         size_t vectorCountPerDataPage = Page<float>::calcVectorCount(dimension);
         size_t lastPageVectorCount = parsed.size() - vectorCountPerDataPage * dataPageCount;
-        auto nextIdsPtr = (u_int32_t*)&(*lastDataPage->getEndTuples(dimension));
+        auto nextIdsPtr = (u_int32_t *) &(*lastDataPage->getEndTuples(dimension));
 
         for (size_t i = 0; i < parsed[0].size(); ++i) {
-            BOOST_TEST(lastDataPage->tuples[(lastPageVectorCount - 1) * parsed[0].size() + i] == parsed[parsed.size() - 1][i]);
+            BOOST_TEST(lastDataPage->tuples[(lastPageVectorCount - 1) * parsed[0].size() + i] ==
+                       parsed[parsed.size() - 1][i]);
         }
         for (size_t i = 0; i < lastPageVectorCount; ++i) {
             BOOST_TEST(*(nextIdsPtr) == parsed.size() - lastPageVectorCount + i);
@@ -49,6 +50,10 @@ BOOST_AUTO_TEST_SUITE(TestPages)
         for (size_t i = 0; i < 10; ++i) {
             BOOST_TEST(nextCentroidPage->tuples[i].vec == parsed[centroidTuplesPerPage + i]);
         }
+
+        // TODO: remove
+        pase.findNearestVectors(parsed[0], 5, 5);
+        pase.findNearestVectorIds(parsed[0], 5, 5);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

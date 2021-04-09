@@ -38,7 +38,6 @@ struct PaseIVFFlat {
         delete curCentroidPage;
     }
 
-private:
     void addCentroid(
             std::vector<std::reference_wrapper<std::vector<T>>> &data,
             std::vector<u_int32_t> &ids,
@@ -83,7 +82,6 @@ private:
         lastCentroidElemIt += 1;
     }
 
-public:
     void train(std::vector<std::vector<T>> &points, size_t maxEpochs, float tol) {
         IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
 
@@ -93,17 +91,51 @@ public:
         }
     }
 
-    std::vector<std::vector<T>> search(const std::vector<T> &vec, size_t neighbours, size_t clusterCountToSelect) {
+    std::vector<std::vector<T>>
+    findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
+        auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
+        auto result = std::vector<std::vector<T>>();
+        result.reserve(neighbourCount);
+
+        for (auto &[vec, id]: searchResult) {
+            result.push_back(std::move(vec));
+        }
+        return result;
+    }
+
+    std::vector<u_int32_t>
+    findNearestVectorIds(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
+        auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
+        auto result = std::vector<u_int32_t>();
+        result.reserve(neighbourCount);
+
+        for (auto &[vec, id]: searchResult) {
+            result.push_back(id);
+        }
+        return result;
+    }
+
+private:
+    std::vector<std::pair<std::vector<T>, u_int32_t>>
+    search(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
-        using VecWithDist = std::pair<const T *, float>;
+        using VecWithDist = std::tuple<const T *, float, u_int32_t>;
 
         std::vector<CentrWithDist> centrDists;
+
+        auto distanceCounter = [](const T *l, const T *r, const size_t size) {
+            float result = 0;
+            for (uint32_t i = 0; i < size; ++i) {
+                result += (r[i] - l[i]) * (r[i] - l[i]);
+            }
+            return result;
+        };
 
         for (CentroidPage<T> *it = firstCentroidPage; it != nullptr; it = it->nextPage) {
             for (const CentroidTuple<T> &c_tuple: it->tuples) {
                 const std::vector<T> &centroid = c_tuple.vec;
-                centrDists.emplace_back(&c_tuple, distance(c_tuple.vec.data(), vec.data(),
-                                                           std::min(vec.size(), dimension)));
+                centrDists.emplace_back(&c_tuple, distanceCounter(c_tuple.vec.data(), vec.data(),
+                                                                  std::min(vec.size(), dimension)));
             }
         }
 
@@ -112,35 +144,39 @@ public:
             return lhs.second < rhs.second;
         });
 
-        std::vector<CentroidTuple<T> *> topClusters(clusterCountToSelect);
+        std::vector<const CentroidTuple<T> *> topClusters(clusterCountToSelect);
         for (size_t i = 0; i < clusterCountToSelect; ++i) {
             topClusters[i] = centrDists[i].first;
         }
 
-        std::vector<const VecWithDist> topVectors;
+        std::vector<VecWithDist> topVectors;
 
-        for (CentroidTuple<T> *cluster: topClusters) {
+        for (const CentroidTuple<T> *cluster: topClusters) {
             size_t vectorsLeft = cluster->vectorCount;
-            for (DataPage<T> pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
-                size_t vectorsCountOnPage = std::min(pg.calcTuplesSize() / dimension, vectorsLeft);
+            for (const DataPage<T> *pg = cluster->firstDataPage; pg->hasNextPage(); pg = pg->nextPage) {
+                size_t vectorsCountOnPage = std::min(pg->calcVectorCount(dimension), vectorsLeft);
+                auto nextIdPtr = (u_int32_t *) &(*pg->getEndTuples(dimension));
                 vectorsLeft -= vectorsCountOnPage;
                 for (size_t i = 0; i < vectorsCountOnPage; ++i) {
-                    topVectors.emplace_back(pg->tuples.data() + i * dimension, 0);
+                    topVectors.emplace_back(pg->tuples.data() + i * dimension, 0, *nextIdPtr);
+                    nextIdPtr += 4;
                 }
             }
         }
 
         for (VecWithDist &vDist: topVectors) {
-            vDist.second = distance(vec.data(), vDist.first, dimension);
+            std::get<1>(vDist) = distanceCounter(vec.data(), std::get<0>(vDist), dimension);
         }
 
         std::sort(topVectors.begin(), topVectors.end(), [](const VecWithDist &lhs, const VecWithDist &rhs) {
-            return lhs.second < rhs.second;
+            return std::get<1>(lhs) < std::get<1>(rhs);
         });
 
-        std::vector<std::vector<T>> result(neighbours);
-        for (size_t i = 0; i < neighbours; ++i) {
-            result[i] = std::vector<T>(topVectors[i].first, topVectors[i].first + dimension);
+        std::vector<std::pair<std::vector<T>, u_int32_t>> result(neighbourCount);
+        for (size_t i = 0; i < neighbourCount; ++i) {
+            result[i] = std::make_pair(
+                    std::vector<T>(std::get<0>(topVectors[i]), std::get<0>(topVectors[i]) + dimension),
+                    std::get<2>(topVectors[i]));
         }
         return result;
     }
