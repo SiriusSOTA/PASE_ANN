@@ -22,9 +22,7 @@ BOOST_AUTO_TEST_CASE(test_centroids_build_int) {
     }
     size_t clusterCount, epochs;
     fin >> clusterCount >> epochs;
-    IVFFlatClusterData<int> result = std::move(kMeans<int>(data, clusterCount, epochs)); 
-    
-
+    IVFFlatClusterData<int> result = kMeans<int>(data, clusterCount, epochs, 1e-4);
 }
 
 
