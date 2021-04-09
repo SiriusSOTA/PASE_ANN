@@ -84,8 +84,8 @@ private:
     }
 
 public:
-    void train(std::vector<std::vector<T>> &points, size_t epochs) {
-        IVFFlatClusterData<T> data = kMeans(points, clusterCount, epochs);
+    void train(std::vector<std::vector<T>> &points, size_t maxEpochs, float tol) {
+        IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
 
         // all vectors have the same length
         for (u_int32_t i = 0; i < data.centroids.size(); ++i) {

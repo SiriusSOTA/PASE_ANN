@@ -40,10 +40,9 @@ float distance(const std::vector<T> &x, const std::vector<T> &y) {
 }
 
 template<typename T>
-IVFFlatClusterData<T> kMeans(std::vector<std::vector<T>> &points, size_t clusterCount, size_t epochs) {
+IVFFlatClusterData<T> kMeans(std::vector<std::vector<T>> &points, size_t clusterCount, size_t maxEpochs, float tol) {
     std::mt19937 generator(0);
     size_t num = points.size();
-    size_t dim = points[0].size();
 
     std::vector<u_int32_t> pointsId(points.size(), 0);
     std::vector<float> minDist(points.size(), std::numeric_limits<float>::max());
@@ -53,11 +52,14 @@ IVFFlatClusterData<T> kMeans(std::vector<std::vector<T>> &points, size_t cluster
         data.centroids[i] = points[generator() % num];
     }
 
-    while (epochs--) {
+    while (maxEpochs--) {
         //assign cluster to points
         assignPoints(data.centroids, points, minDist, pointsId);
         //recompute points
-        computePoints(data.centroids, points, minDist, pointsId);
+        float frobeniusNorm = computePoints(data.centroids, points, minDist, pointsId);
+        if (frobeniusNorm < tol) {
+            break;
+        }
     }
     for (size_t i = 0; i < points.size(); ++i) {
         data.clusters[pointsId[i]].push_back(std::ref(points[i]));
@@ -86,9 +88,9 @@ void assignPoints(std::vector<std::vector<T>> &centroids, std::vector<std::vecto
 }
 
 template<typename T>
-void computePoints(std::vector<std::vector<T>> &centroids, std::vector<std::vector<T>> &points,
-                   std::vector<float> &minDist,
-                   std::vector<u_int32_t> &cluster) {
+float computePoints(std::vector<std::vector<T>> &centroids, std::vector<std::vector<T>> &points,
+                    std::vector<float> &minDist,
+                    std::vector<u_int32_t> &cluster) {
     // updating and computing
     auto clusterCount = static_cast<u_int32_t>(centroids.size());
     std::vector<u_int32_t> newPoints(clusterCount, 0);
@@ -115,6 +117,8 @@ void computePoints(std::vector<std::vector<T>> &centroids, std::vector<std::vect
         }
         frobeniusNorm += squaredDistance(currentVec, centroids);
     }
+    frobeniusNorm = sqrtf(frobeniusNorm);
+    return frobeniusNorm;
 }
 
 #endif //PASE_ANN_CLUSTERING_H
