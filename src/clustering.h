@@ -9,7 +9,7 @@
 
 template<typename T>
 struct IVFFlatClusterData {
-    std::vector<std::vector<std::reference_wrapper<std::vector<T>>>> clusters;
+    std::vector<std::vector<std::reference_wrapper<const std::vector<T>>>> clusters;
     std::vector<std::vector<u_int32_t>> idClusters;
     std::vector<std::vector<T>> centroids;
 
@@ -22,6 +22,10 @@ struct IVFFlatClusterData {
     IVFFlatClusterData(const IVFFlatClusterData &) = delete;
 
     IVFFlatClusterData &operator=(const IVFFlatClusterData &) = delete;
+
+    IVFFlatClusterData(IVFFlatClusterData &&) noexcept = default;
+
+    IVFFlatClusterData &operator=(IVFFlatClusterData &&) noexcept = default;
 };
 
 enum class kMeansSamplingMode {
@@ -29,8 +33,8 @@ enum class kMeansSamplingMode {
     kPlusplus
 };
 
-template<typename T>
-inline float squaredDistance(const std::vector<T> &x, const std::vector<T> &y) {
+template<typename T, typename U>
+inline float squaredDistance(const std::vector<T> &x, const std::vector<U> &y) {
     float squaredDist = 0;
     // ALERT: UB if x.size() > y.size()
     for (size_t i = 0; i < x.size(); ++i) {
@@ -40,8 +44,8 @@ inline float squaredDistance(const std::vector<T> &x, const std::vector<T> &y) {
     return squaredDist;
 }
 
-template<typename T>
-float distance(const std::vector<T> &x, const std::vector<T> &y) {
+template<typename T, typename U>
+float distance(const std::vector<T> &x, const std::vector<U> &y) {
     return sqrtf(squaredDistance(x, y));
 }
 
@@ -54,7 +58,7 @@ kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMe
     std::mt19937 gen(seed);
     std::vector<std::vector<T>> clusters(clusterCount);
     if (mode == kMeansSamplingMode::kNormal) {
-        for (auto& cluster: clusters) {
+        for (auto &cluster: clusters) {
             cluster = points[gen() % pointsCount];
         }
     } else if (mode == kMeansSamplingMode::kPlusplus) {
@@ -63,9 +67,61 @@ kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMe
     return clusters;
 }
 
+template<typename T>
+void assignPoints(std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
+                  std::vector<float> &minSquaredDist,
+                  std::vector<u_int32_t> &cluster) {
+    for (size_t i = 0; i < centroids.size(); ++i) {
+        u_int32_t clusterId = i;
+        for (size_t j = 0; j < points.size(); ++j) {
+            //computed distance to current cluster
+            float dist = squaredDistance(centroids[i], points[j]);
+            //checking if distance is smaller
+            if (dist < minSquaredDist[j]) {
+                minSquaredDist[j] = dist;
+                cluster[j] = clusterId;
+            }
+        }
+    }
+}
+
+template<typename T>
+float computePoints(std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
+                    std::vector<float> &minSquaredDist,
+                    std::vector<u_int32_t> &cluster) {
+    // updating and computing
+    auto clusterCount = static_cast<u_int32_t>(centroids.size());
+    std::vector<u_int32_t> newPoints(clusterCount, 0);
+    // not checking if points is empty
+    size_t dimension = points.at(0).size();
+    std::vector<std::vector<float>> sum(clusterCount, std::vector<float>(dimension, 0.0));
+    for (size_t j = 0; j < points.size(); ++j) {
+        u_int32_t clusterId = cluster[j];
+        newPoints[clusterId]++;
+        for (size_t i = 0; i < points[j].size(); ++i) {
+            sum[clusterId][i] += static_cast<float>(points[j][i]);
+        }
+        minSquaredDist[j] = std::numeric_limits<float>::max();
+    }
+
+    float frobeniusNorm = 0;
+    std::vector<float> currentVec(dimension);
+    for (size_t i = 0; i < centroids.size(); ++i) {
+        u_int32_t clusterId = i;
+        currentVec = centroids[i];
+        for (size_t j = 0; j < centroids[i].size(); ++j) {
+            centroids[i][j] = sum[clusterId][j] / newPoints[clusterId];
+        }
+        frobeniusNorm += squaredDistance(currentVec, centroids[i]);
+    }
+    frobeniusNorm = sqrtf(frobeniusNorm);
+    return frobeniusNorm;
+}
+
 //TODO: std::cref and const reference for points - after search debugging
 template<typename T>
-IVFFlatClusterData<T> kMeans(std::vector<std::vector<T>> &points, size_t clusterCount, size_t maxEpochs, float tol) {
+IVFFlatClusterData<T>
+kMeans(const std::vector<std::vector<T>> &points, size_t clusterCount, size_t maxEpochs, float tol) {
 
     std::vector<u_int32_t> pointsId(points.size(), 0);
     std::vector<float> minSquaredDist(points.size(), std::numeric_limits<float>::max());
@@ -93,62 +149,12 @@ IVFFlatClusterData<T> kMeans(std::vector<std::vector<T>> &points, size_t cluster
     }
 
     for (size_t i = 0; i < points.size(); ++i) {
-        data.clusters[pointsId[i]].push_back(std::ref(points[i]));
+        data.clusters[pointsId[i]].push_back(std::cref(points[i]));
         data.idClusters[pointsId[i]].push_back(i);
     }
 
-    return data;
+    return std::move(data);
 }
 
-template<typename T>
-void assignPoints(std::vector<std::vector<float>> &centroids, std::vector<std::vector<T>> &points,
-                  std::vector<float> &minSquaredDist,
-                  std::vector<u_int32_t> &cluster) {
-    for (size_t i = 0; i < centroids.size(); ++i) {
-        u_int32_t clusterId = i;
-        for (size_t j = 0; j < points.size(); ++j) {
-            //computed distance to current cluster
-            float dist = squaredDistance(centroids[i], points[j]);
-            //checking if distance is smaller
-            if (dist < minSquaredDist[j]) {
-                minSquaredDist[j] = dist;
-                cluster[j] = clusterId;
-            }
-        }
-    }
-}
-
-template<typename T>
-float computePoints(std::vector<std::vector<float>> &centroids, std::vector<std::vector<T>> &points,
-                    std::vector<float> &minSquaredDist,
-                    std::vector<u_int32_t> &cluster) {
-    // updating and computing
-    auto clusterCount = static_cast<u_int32_t>(centroids.size());
-    std::vector<u_int32_t> newPoints(clusterCount, 0);
-    // not checking if points is empty
-    size_t dimension = points.at(0).size();
-    std::vector<std::vector<float>> sum(clusterCount, std::vector<float>(dimension, 0.0));
-    for (size_t j = 0; j < points.size(); ++j) {
-        u_int32_t clusterId = cluster[j];
-        newPoints[clusterId]++;
-        for (size_t i = 0; i < points[j].size(); ++i) {
-            sum[clusterId][i] += static_cast<float>(points[j][i]);
-        }
-        minSquaredDist[j] = std::numeric_limits<float>::max();
-    }
-
-    float frobeniusNorm = 0;
-    std::vector<T> currentVec(dimension);
-    for (size_t i = 0; i < centroids.size(); ++i) {
-        u_int32_t clusterId = i;
-        currentVec = centroids[i];
-        for (size_t j = 0; j < centroids[i].size(); ++j) {
-            centroids[i][j] = sum[clusterId][j] / newPoints[clusterId];
-        }
-        frobeniusNorm += squaredDistance(currentVec, centroids);
-    }
-    frobeniusNorm = sqrtf(frobeniusNorm);
-    return frobeniusNorm;
-}
 
 #endif //PASE_ANN_CLUSTERING_H
