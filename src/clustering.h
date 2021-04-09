@@ -6,6 +6,7 @@
 #include <functional>
 #include <limits>
 #include <chrono>
+#include <random>
 
 // debug
 #include <iostream>
@@ -32,8 +33,8 @@ struct IVFFlatClusterData {
 };
 
 enum class kMeansSamplingMode {
-    kNormal,
-    kPlusplus
+    kNormal = 0,
+    kPlusplus = 1
 };
 
 template<typename T, typename U>
@@ -56,6 +57,9 @@ float distance(const std::vector<T> &x, const std::vector<U> &y) {
 template<typename T>
 std::vector<std::vector<T>>
 kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMeansSamplingMode mode) {
+    if (clusterCount == 0) {
+        return std::vector<std::vector<T>>();
+    }
     size_t pointsCount = points.size();
     auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::mt19937 gen(seed);
@@ -65,7 +69,15 @@ kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMe
             cluster = points[gen() % pointsCount];
         }
     } else if (mode == kMeansSamplingMode::kPlusplus) {
-        // not implemented
+        std::vector<float> sqDistSum(pointsCount);
+        clusters[0] = points[gen() % pointsCount];
+        for (size_t i = 0; i < pointsCount; ++i) {
+            sqDistSum[i] += squaredDistance(clusters[0], points[i]);
+        }
+        std::discrete_distribution distanceDistribution(sqDistSum.begin(), sqDistSum.end());
+        for (size_t i = 1; i < clusterCount; ++i) {
+            //working
+        }
     }
     return clusters;
 }
