@@ -35,12 +35,16 @@ struct CentroidTuple {
 
     ~CentroidTuple() {
         auto curDataPage = firstDataPage;
+        if (curDataPage == nullptr) {
+            return;
+        }
         DataPage<T> *nextDataPage = nullptr;
         while (curDataPage->hasNextPage()) {
             nextDataPage = curDataPage->nextPage;
             delete curDataPage;
             curDataPage = nextDataPage;
         }
+        delete curDataPage;
     }
 };
 
