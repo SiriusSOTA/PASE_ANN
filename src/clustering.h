@@ -143,8 +143,7 @@ float computePoints(std::vector<std::vector<float>> &centroids, std::vector<std:
         u_int32_t clusterId = i;
         currentVec = centroids[i];
         for (size_t j = 0; j < centroids[i].size(); ++j) {
-            //TODO: static_cast in the end
-            centroids[i][j] = static_cast<T>(sum[clusterId][j] / newPoints[clusterId]);
+            centroids[i][j] = sum[clusterId][j] / newPoints[clusterId];
         }
         frobeniusNorm += squaredDistance(currentVec, centroids);
     }
