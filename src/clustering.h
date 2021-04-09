@@ -7,6 +7,7 @@
 #include <limits>
 #include <chrono>
 #include <random>
+#include "thread_pool.h"
 
 // debug
 #include <iostream>
@@ -83,20 +84,26 @@ kMeansSample(const std::vector<std::vector<T>> &points, size_t clusterCount, kMe
 }
 
 template<typename T>
-void assignPoints(std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
+void assignPoints(const std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
                   std::vector<float> &minSquaredDist,
                   std::vector<u_int32_t> &cluster) {
     for (size_t i = 0; i < centroids.size(); ++i) {
         u_int32_t clusterId = i;
-        for (size_t j = 0; j < points.size(); ++j) {
-            //computed distance to current cluster
-            float dist = squaredDistance(centroids[i], points[j]);
-            //checking if distance is smaller
-            if (dist < minSquaredDist[j]) {
-                minSquaredDist[j] = dist;
-                cluster[j] = clusterId;
+
+        auto &threadPool = getThreadPool();
+
+//        threadPool.Submit([&]() {
+            for (size_t j = 0; j < points.size(); ++j) {
+                // computed distance to current cluster
+                float dist = squaredDistance(centroids[i], points[j]);
+                // checking if distance is smaller
+                if (dist < minSquaredDist[j]) {
+                    minSquaredDist[j] = dist;
+                    cluster[j] = clusterId;
+                }
             }
-        }
+//        });
+//        threadPool.Join();
     }
 }
 

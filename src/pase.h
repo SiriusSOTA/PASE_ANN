@@ -1,6 +1,8 @@
 #include "page.h"
 #include "parser.h"
 #include "clustering.h"
+#include "thread_pool.h"
+
 #include <functional>
 #include <vector>
 #include <random>
@@ -184,9 +186,3 @@ private:
     }
 
 };
-
-
-
-    
-
-

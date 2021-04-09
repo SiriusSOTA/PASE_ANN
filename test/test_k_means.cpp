@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(JustWorks) {
 BOOST_AUTO_TEST_CASE(BuildPages) {
     const size_t centroidTuplesPerPage = 204;
     const size_t dimension = 128;
-    const size_t clusterCount = 30;
+    const size_t clusterCount = 100;
     const size_t epochs = 100;
     const float tol = 1e-4;
 
