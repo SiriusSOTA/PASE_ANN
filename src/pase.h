@@ -43,7 +43,7 @@ private:
         return sqrtf(dist);
     }
 
-    void kMeans(std::vector<std::vector<T>> &points, size_t clusterCount, size_t epochs) {
+    void kMeans(std::vector<std::vector<T>> &points, size_t epochs) {
         //инициализация 
         std::mt19937 generator(0);
         size_t num = points.size();
