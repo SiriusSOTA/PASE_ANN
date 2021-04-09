@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 
+
 template<typename T>
 struct PaseIVFFlat {
     size_t dimension;
@@ -22,6 +23,16 @@ struct PaseIVFFlat {
         }
     }
 
+    ~PaseIVFFlat() {
+        auto curCentroidPage = firstCentroidPage;
+        CentroidPage<T> *nextCentroidPage = nullptr;
+        while (curCentroidPage->hasNextPage()) {
+            nextCentroidPage = curCentroidPage->nextPage;
+            delete curCentroidPage;
+            curCentroidPage = nextCentroidPage;
+        }
+    }
+
 private:
     float distance(std::vector<T> &x, std::vector<T> &y) {
         float dist = 0;
@@ -32,7 +43,7 @@ private:
         return sqrtf(dist);
     }
 
-    void kMeans(std::vector<std::vector<T>> &points, size_t clusters, size_t epochs) {
+    void kMeans(std::vector<std::vector<T>> &points, size_t clusterCount, size_t epochs) {
         //инициализация 
         std::mt19937 generator(0);
         size_t num = points.size();
@@ -41,21 +52,23 @@ private:
         std::vector<std::vector<T>> centroids;
         std::vector<float> minDist(points.size(), __FLT_MAX__);
         std::vector<int> &cluster(points.size(), 0);
-        for (size_t i = 0; i < clusters; ++i) {
+        for (size_t i = 0; i < clusterCount; ++i) {
             centroids.push_back(points[generator() % num]);
         }
         while (epochs--) {
             //соотнесение точки с кластером
             assigningPoints(centroids, points, minDist, cluster);
             //пересчёт
-            computingPoints(centroids, points, minDist, cluster, dim, clusters);
+            computingPoints(centroids, points, minDist, cluster, dim, clusterCount);
         }
-        std::vector<std::vector<std::reference_wrapper<std::vector<T>>>> data;
+        std::vector<std::vector<std::reference_wrapper<std::vector<T>>>> data(clusterCount);
+        std::vector<std::vector<u_int32_t>> ids(clusterCount);
         for (size_t i = 0; i < points.size(); ++i) {
             data[cluster[i]].push_back(std::ref(points[i]));
+            ids[cluster[i]].push_back(i);
         }
-        for (size_t i = 0; i < clusters; ++i) {
-            addCentroid(data[i], cluster[i]);
+        for (size_t i = 0; i < clusterCount; ++i) {
+            addCentroid(data[i], ids[i], cluster[i]);
         }
     }
 
@@ -78,22 +91,33 @@ private:
     }
 
 public:
-    void makeCentroid(std::vector<std::vector<T>> &points, size_t epochs) {
+    void buildIndex(std::vector<std::vector<T>> &points, size_t epochs) {
         kMeans(points, clusterCount, epochs);
     }
 
-    void addCentroid(std::vector<std::reference_wrapper<std::vector<T>>> &data, std::vector<T> &centroidVector) {
+    void addCentroid(
+            std::vector<std::reference_wrapper<std::vector<T>>> &data,
+            std::vector<u_int32_t> &ids,
+            std::vector<T> &centroidVector) {
         auto *firstDataPage = new DataPage<T>();
         DataPage<T> *lastDataPage = firstDataPage;
         auto lastDataElemIt = lastDataPage->tuples.begin();
+        auto endTuplesIt = lastDataPage->getEndTuples(dimension);
+        auto nextIdPtr = &(*endTuplesIt);
 
-        for (auto &vec: data) {
+        for (size_t i = 0; i < data.size(); ++i) {
+            auto& vec = data[i];
             lastDataElemIt = std::copy(vec.get().begin(), vec.get().end(), lastDataElemIt);
-            if (lastDataElemIt > lastDataPage->tuples.end() - dimension) {
+            std::memcpy(nextIdPtr, &ids[i], 4);
+            nextIdPtr += 4;
+
+            if (lastDataElemIt == endTuplesIt) {
                 auto newDataPage = new DataPage<T>();
                 lastDataPage->nextPage = newDataPage;
                 lastDataPage = newDataPage;
                 lastDataElemIt = lastDataPage->tuples.begin();
+                endTuplesIt = lastDataPage->getEndTuples(dimension);
+                nextIdPtr = &(*endTuplesIt);
             }
         }
 
