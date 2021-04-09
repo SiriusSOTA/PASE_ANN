@@ -4,7 +4,7 @@
 
 BOOST_AUTO_TEST_SUITE(TestParser)
 
-BOOST_AUTO_TEST_CASE(test_parse_float)
+BOOST_AUTO_TEST_CASE(TestParseFloat)
 {
     Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", 128, 10000);
     auto parsed = parser.parse();
@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(test_parse_float)
 }
 
 
-BOOST_AUTO_TEST_CASE(test_parse_char)
+BOOST_AUTO_TEST_CASE(TestParseChar)
 {
     Parser<char> parser("../../test/test_data/bigann_query.bvecs", 128, 10000);
     auto parsed = parser.parse();
