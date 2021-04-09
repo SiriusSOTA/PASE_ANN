@@ -162,7 +162,7 @@ public:
         }
     }
 
-    void search(const std::vector<T> &vec, size_t neighbours, size_t clusterCountToSelect) {
+    std::vector<std::vector<T>> search(const std::vector<T> &vec, size_t neighbours, size_t clusterCountToSelect) {
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
         using VecWithDist = std::pair<const T *, float>;
 
