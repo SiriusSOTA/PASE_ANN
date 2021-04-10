@@ -1,13 +1,11 @@
-#include "clustering.h"
+#include "utils.hpp"
+#include "pase.hpp"
+
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
-#include <fstream>
-#include <functional>
 #include <iostream>
 #include <vector>
-#include "clustering.h"
-#include "utils.h"
-#include "pase.h"
+
 
 BOOST_AUTO_TEST_SUITE(CentroidBuild)
 

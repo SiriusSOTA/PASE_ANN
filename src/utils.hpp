@@ -1,5 +1,4 @@
-#ifndef PASE_ANN_UTILS_H
-#define PASE_ANN_UTILS_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -38,5 +37,3 @@ std::ostream &operator<<(std::ostream &os, const std::vector<T> &s) {
     }
     return os << "]";
 }
-
-#endif //PASE_ANN_UTILS_H

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef __SSE3__
 #include <immintrin.h>
 #endif
@@ -7,7 +9,7 @@
 #endif
 
 
-float fvec_L2sqr_ref(const float* x, const float* y, size_t d) {
+inline float fvecL2sqrRef(const float* x, const float* y, size_t d) {
     size_t i;
     float res = 0;
     for (i = 0; i < d; i++) {
@@ -17,7 +19,7 @@ float fvec_L2sqr_ref(const float* x, const float* y, size_t d) {
     return res;
 }
 
-float fvec_norm_L2sqr_ref(const float* x, size_t d) {
+inline float fvecNormL2sqrRef(const float* x, size_t d) {
     size_t i;
     double res = 0;
     for (i = 0; i < d; i++)
@@ -28,9 +30,10 @@ float fvec_norm_L2sqr_ref(const float* x, size_t d) {
 #ifdef __SSE3__
 
 // reads 0 <= d < 4 floats as __m128
-static inline __m128 masked_read(int d, const float* x) {
+static inline __m128 maskedRead(int d, const float* x) {
     assert(0 <= d && d < 4);
-    ALIGNED(16) float buf[4] = {0, 0, 0, 0};
+//    ALIGNED(16)
+    float buf[4] = {0, 0, 0, 0};
     switch (d) {
         case 3:
             buf[2] = x[2];
@@ -43,7 +46,7 @@ static inline __m128 masked_read(int d, const float* x) {
     // cannot use AVX2 _mm_mask_set1_epi32
 }
 
-float fvec_norm_L2sqr(const float* x, size_t d) {
+inline float fvecNormL2sqr(const float* x, size_t d) {
     __m128 mx;
     __m128 msum1 = _mm_setzero_ps();
 
@@ -54,7 +57,7 @@ float fvec_norm_L2sqr(const float* x, size_t d) {
         d -= 4;
     }
 
-    mx = masked_read(d, x);
+    mx = maskedRead(d, x);
     msum1 = _mm_add_ps(msum1, _mm_mul_ps(mx, mx));
 
     msum1 = _mm_hadd_ps(msum1, msum1);
@@ -66,7 +69,7 @@ float fvec_norm_L2sqr(const float* x, size_t d) {
 
 #ifdef __AVX__
 
-float fvec_inner_product(const float* x, const float* y, size_t d) {
+float fvecInnerProduct(const float* x, const float* y, size_t d) {
     __m256 msum1 = _mm256_setzero_ps();
 
     while (d >= 8) {
@@ -101,7 +104,7 @@ float fvec_inner_product(const float* x, const float* y, size_t d) {
     return _mm_cvtss_f32(msum2);
 }
 
-float fvec_L2sqr(const float* x, const float* y, size_t d) {
+float fvecL2sqr(const float* x, const float* y, size_t d) {
     __m256 msum1 = _mm256_setzero_ps();
 
     while (d >= 8) {
@@ -142,7 +145,7 @@ float fvec_L2sqr(const float* x, const float* y, size_t d) {
 
 #elif defined(__SSE3__) // But not AVX
 
-float fvec_L2sqr(const float* x, const float* y, size_t d) {
+inline float fvecL2sqr(const float* x, const float* y, size_t d) {
     __m128 msum1 = _mm_setzero_ps();
 
     while (d >= 4) {
@@ -157,8 +160,8 @@ float fvec_L2sqr(const float* x, const float* y, size_t d) {
 
     if (d > 0) {
         // add the last 1, 2 or 3 values
-        __m128 mx = masked_read(d, x);
-        __m128 my = masked_read(d, y);
+        __m128 mx = maskedRead(d, x);
+        __m128 my = maskedRead(d, y);
         __m128 a_m_b1 = _mm_sub_ps(mx, my);
         msum1 = _mm_add_ps(msum1, _mm_mul_ps(a_m_b1, a_m_b1));
     }
@@ -168,7 +171,7 @@ float fvec_L2sqr(const float* x, const float* y, size_t d) {
     return _mm_cvtss_f32(msum1);
 }
 
-float fvec_inner_product(const float* x, const float* y, size_t d) {
+inline float fvecInnerProduct(const float* x, const float* y, size_t d) {
     __m128 mx, my;
     __m128 msum1 = _mm_setzero_ps();
 
@@ -182,8 +185,8 @@ float fvec_inner_product(const float* x, const float* y, size_t d) {
     }
 
     // add the last 1, 2, or 3 values
-    mx = masked_read(d, x);
-    my = masked_read(d, y);
+    mx = maskedRead(d, x);
+    my = maskedRead(d, y);
     __m128 prod = _mm_mul_ps(mx, my);
 
     msum1 = _mm_add_ps(msum1, prod);
@@ -195,9 +198,9 @@ float fvec_inner_product(const float* x, const float* y, size_t d) {
 
 #elif defined(__aarch64__)
 
-float fvec_L2sqr(const float* x, const float* y, size_t d) {
+float fvecL2sqr(const float* x, const float* y, size_t d) {
     if (d & 3)
-        return fvec_L2sqr_ref(x, y, d);
+        return fvecL2sqr_ref(x, y, d);
     float32x4_t accu = vdupq_n_f32(0);
     for (size_t i = 0; i < d; i += 4) {
         float32x4_t xi = vld1q_f32(x + i);
@@ -209,9 +212,9 @@ float fvec_L2sqr(const float* x, const float* y, size_t d) {
     return vdups_laneq_f32(a2, 0) + vdups_laneq_f32(a2, 1);
 }
 
-float fvec_inner_product(const float* x, const float* y, size_t d) {
+float fvecInnerProduct(const float* x, const float* y, size_t d) {
     if (d & 3)
-        return fvec_inner_product_ref(x, y, d);
+        return fvecInnerProductRef(x, y, d);
     float32x4_t accu = vdupq_n_f32(0);
     for (size_t i = 0; i < d; i += 4) {
         float32x4_t xi = vld1q_f32(x + i);
@@ -222,9 +225,9 @@ float fvec_inner_product(const float* x, const float* y, size_t d) {
     return vdups_laneq_f32(a2, 0) + vdups_laneq_f32(a2, 1);
 }
 
-float fvec_norm_L2sqr(const float* x, size_t d) {
+float fvecNormL2sqr(const float* x, size_t d) {
     if (d & 3)
-        return fvec_norm_L2sqr_ref(x, d);
+        return fvecNormL2sqrRef(x, d);
     float32x4_t accu = vdupq_n_f32(0);
     for (size_t i = 0; i < d; i += 4) {
         float32x4_t xi = vld1q_f32(x + i);
@@ -237,16 +240,15 @@ float fvec_norm_L2sqr(const float* x, size_t d) {
 #else
 // scalar implementation
 
-float fvec_L2sqr(const float* x, const float* y, size_t d) {
-    return fvec_L2sqr_ref(x, y, d);
+float fvecL2sqr(const float* x, const float* y, size_t d) {
+    return fvecL2sqrRef(x, y, d);
 }
 
-float fvec_inner_product(const float* x, const float* y, size_t d) {
-    return fvec_inner_product_ref(x, y, d);
+float fvecInnerProduct(const float* x, const float* y, size_t d) {
+    return fvecInnerProductRef(x, y, d);
 }
 
-float fvec_norm_L2sqr(const float* x, size_t d) {
-    return fvec_norm_L2sqr_ref(x, d);
+float fvecNormL2sqr(const float* x, size_t d) {
+    return fvecNormL2sqrRef(x, d);
 }
 #endif
-

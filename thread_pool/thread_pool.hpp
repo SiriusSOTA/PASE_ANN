@@ -7,7 +7,6 @@
 #include <functional>
 
 
-//using Task = std::function<void()>;
 using Task = boost::packaged_task<void>;
 
 class ThreadPool {

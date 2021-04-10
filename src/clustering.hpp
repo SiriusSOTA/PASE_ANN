@@ -1,7 +1,6 @@
-#ifndef PASE_ANN_CLUSTERING_H
-#define PASE_ANN_CLUSTERING_H
+#pragma once
 
-#include "thread_pool.h"
+#include "thread_pool.hpp"
 #include <vector>
 #include <random>
 #include <functional>
@@ -204,6 +203,3 @@ kMeans(const std::vector<const std::vector<T>> &points, const size_t clusterCoun
 
     return std::move(data);
 }
-
-
-#endif //PASE_ANN_CLUSTERING_H

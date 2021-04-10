@@ -1,7 +1,10 @@
-#include "page.h"
-#include "parser.h"
-#include "clustering.h"
-#include "thread_pool.h"
+#pragma once
+
+#include "page.hpp"
+#include "parser.hpp"
+#include "clustering.hpp"
+#include "thread_pool.hpp"
+#include "calc_distance.hpp"
 
 #include <functional>
 #include <vector>
@@ -139,9 +142,12 @@ private:
 
         std::vector<CentrWithDist> centrDists;
 
-        auto distanceCounter = [](const T *l, const T *r, const size_t size) {
+        auto distanceCounter = [](const T *l, const T *r, const size_t dim) {
+            if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
+                return fvecL2sqr(l, r,dim);
+            }
             float result = 0;
-            for (uint32_t i = 0; i < size; ++i) {
+            for (uint32_t i = 0; i < dim; ++i) {
                 result += static_cast<float>(r[i] - l[i]) * static_cast<float>(r[i] - l[i]);
             }
             return sqrtf(result);

@@ -1,5 +1,5 @@
-#include <parser.h>
 #include <boost/test/unit_test.hpp>
+#include <parser.hpp>
 #include <cstdlib>
 
 BOOST_AUTO_TEST_SUITE(TestParser)

@@ -1,7 +1,8 @@
-#include "pase.h"
+#include "pase.hpp"
+
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
-#include <parser.h>
+#include <parser.hpp>
 
 
 BOOST_AUTO_TEST_SUITE(TestPages)
