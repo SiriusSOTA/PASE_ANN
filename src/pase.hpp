@@ -140,7 +140,7 @@ private:
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
         using VecWithDist = std::tuple<const T *, float, u_int32_t>;
 
-        std::vector<CentrWithDist> centrDists;
+        std::vector<CentrWithDist> centrDists(clusterCount);
 
         auto distanceCounter = [](const T *l, const T *r, const size_t dim) {
             if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
@@ -153,15 +153,30 @@ private:
             return sqrtf(result);
         };
 
+        auto& threadPool = getThreadPool();
+        std::vector<boost::unique_future<void>> pendingTasks;
+
         size_t clustersLeft = clusterCount;
         for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
             size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
-            for (size_t i = 0; i < centroidCountOnPage; ++i) {
-                const auto &centroid = pg->tuples[i];
-                centrDists.emplace_back(&centroid, distanceCounter(centroid.vec.data(), vec.data(),
-                                                                   std::min(vec.size(), dimension)));
-            }
+
+            auto calcDistsToCentroids = [this, &centrDists, &vec, &distanceCounter, centroidCountOnPage, clustersLeft, pg]() {
+                for (size_t i = 0; i < centroidCountOnPage; ++i) {
+                    const auto &centroid = pg->tuples[i];
+                    centrDists[clusterCount - clustersLeft + i] = std::move(
+                            CentrWithDist(&centroid, distanceCounter(centroid.vec.data(), vec.data(),
+                                                                     std::min(vec.size(), dimension))));
+                }
+            };
+            Task task(calcDistsToCentroids);
+            boost::unique_future<void> fut = task.get_future();
+            pendingTasks.push_back(std::move(fut));
+            threadPool.Submit(std::move(task));
+
+            clustersLeft -= centroidCountOnPage;
         }
+        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
+
 
         //TODO: find/implement a faster way to sort
         std::sort(centrDists.begin(), centrDists.end(), [](const CentrWithDist &lhs, const CentrWithDist &rhs) {
@@ -173,20 +188,37 @@ private:
             topClusters[i] = centrDists[i].first;
         }
 
-        std::vector<VecWithDist> topVectors;
+        size_t vectorCount = 0;
+        for (const CentroidTuple<T> *cluster: topClusters) {
+            vectorCount += cluster->vectorCount;
+        }
+
+        std::vector<VecWithDist> topVectors(vectorCount);
+        size_t topVectorIdx = 0;
 
         for (const CentroidTuple<T> *cluster: topClusters) {
-            size_t vectorsLeft = cluster->vectorCount;
-            for (const DataPage<T> *pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
-                size_t vectorsCountOnPage = std::min(pg->calcVectorCount(dimension), vectorsLeft);
-                auto nextIdPtr = (u_int32_t *) &(*pg->getEndTuples(dimension));
-                vectorsLeft -= vectorsCountOnPage;
-                for (size_t i = 0; i < vectorsCountOnPage; ++i) {
-                    topVectors.emplace_back(pg->tuples.data() + i * dimension, 0, *nextIdPtr);
-                    nextIdPtr += 4;
+            auto getTopVectors = [this, cluster, topVectorIdx, &topVectors]() {
+                auto vectorIdx = topVectorIdx;
+                size_t vectorsLeft = cluster->vectorCount;
+                for (const DataPage<T> *pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
+                    size_t vectorsCountOnPage = std::min(pg->calcVectorCount(dimension), vectorsLeft);
+                    auto nextIdPtr = (u_int32_t *) &(*pg->getEndTuples(dimension));
+                    vectorsLeft -= vectorsCountOnPage;
+                    for (size_t i = 0; i < vectorsCountOnPage; ++i) {
+                        topVectors[vectorIdx] = std::tuple(pg->tuples.data() + i * dimension, 0, *nextIdPtr);
+                        nextIdPtr += 4;
+                        ++vectorIdx;
+                    }
                 }
-            }
+            };
+            Task task(getTopVectors);
+            boost::unique_future<void> fut = task.get_future();
+            pendingTasks.push_back(std::move(fut));
+            threadPool.Submit(std::move(task));
+
+            topVectorIdx += cluster->vectorCount;
         }
+        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
 
         for (VecWithDist &vDist: topVectors) {
             std::get<1>(vDist) = distanceCounter(vec.data(), std::get<0>(vDist), dimension);
