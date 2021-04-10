@@ -144,7 +144,7 @@ private:
 
         auto distanceCounter = [](const T *l, const T *r, const size_t dim) {
             if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
-                return fvecL2sqr(l, r,dim);
+                return fvecL2sqr(l, r, dim);
             }
             float result = 0;
             for (uint32_t i = 0; i < dim; ++i) {

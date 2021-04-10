@@ -1,6 +1,8 @@
 #pragma once
 
 #include "thread_pool.hpp"
+#include "calc_distance.hpp"
+
 #include <vector>
 #include <random>
 #include <functional>
@@ -40,8 +42,11 @@ enum class kMeansSamplingMode {
 
 template<typename T, typename U>
 inline float squaredDistance(const std::vector<T> &x, const std::vector<U> &y) {
-    float squaredDist = 0;
     // ALERT: UB if x.size() > y.size()
+    if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
+        return fvecL2sqr(&(*x.begin()), &(*y.begin()), x.size());
+    }
+    float squaredDist = 0;
     for (size_t i = 0; i < x.size(); ++i) {
         squaredDist += (static_cast<float>(x[i]) - static_cast<float>(y[i])) *
                        (static_cast<float>(x[i]) - static_cast<float>(y[i]));
