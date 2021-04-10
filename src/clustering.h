@@ -109,12 +109,11 @@ void assignPoints(const std::vector<std::vector<float>> &centroids, const std::v
                   std::vector<float> &minSquaredDist,
                   std::vector<u_int32_t> &cluster) {
 
-    // TODO: make one thread pool per program.
-    // TODO: implement waiting for specific tasks.
-    ThreadPool threadPool;
+    auto& threadPool = getThreadPool();
+    std::vector<boost::unique_future<void>> pendingTasks;
     for (size_t j = 0; j < points.size(); ++j) {
 
-        threadPool.Submit([&centroids, &minSquaredDist, &cluster, &points, j]() {
+        auto calcNearestClusters = [&centroids, &minSquaredDist, &cluster, &points, j]() {
             for (size_t i = 0; i < centroids.size(); ++i) {
                 // computed distance to current cluster
                 float dist = squaredDistance(centroids[i], points[j]);
@@ -124,9 +123,14 @@ void assignPoints(const std::vector<std::vector<float>> &centroids, const std::v
                     cluster[j] = i;
                 }
             }
-        });
+        };
+
+        Task task(calcNearestClusters);
+        boost::unique_future<void> fut = task.get_future();
+        pendingTasks.push_back(std::move(fut));
+        threadPool.Submit(std::move(task));
     }
-    threadPool.Join();
+    boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
 }
 
 template<typename T>

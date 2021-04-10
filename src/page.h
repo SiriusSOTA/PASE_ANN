@@ -1,7 +1,9 @@
+#pragma once
+
 #include <vector>
 
 
-static size_t PAGE_SIZE = 8192;  // 8 KB
+static size_t PG_PAGE_SIZE = 8192;  // 8 KB
 
 template<typename T>
 struct Page {
@@ -11,7 +13,7 @@ struct Page {
     Page() : tuples(calcTuplesSize()) {}
 
     inline static size_t calcTuplesSize() {
-        return (PAGE_SIZE - sizeof(Page<T> *)) / sizeof(T);
+        return (PG_PAGE_SIZE - sizeof(Page<T> *)) / sizeof(T);
     }
 
     static size_t calcVectorCount(size_t dimension) {

@@ -1,12 +1,14 @@
 #pragma once
 
 #include <boost/asio/io_service.hpp>
+#include <boost/thread/future.hpp>
 #include <vector>
 #include <thread>
 #include <functional>
 
 
-using Task = std::function<void()>;
+//using Task = std::function<void()>;
+using Task = boost::packaged_task<void>;
 
 class ThreadPool {
 public:
@@ -34,7 +36,7 @@ private:
     bool joined_{false};
 };
 
-//static ThreadPool& getThreadPool() {
-//    static ThreadPool threadPool;
-//    return threadPool;
-//}
+static ThreadPool& getThreadPool() {
+    static ThreadPool threadPool;
+    return threadPool;
+}

@@ -1,5 +1,6 @@
 #include "thread_pool.h"
 #include <boost/asio/post.hpp>
+#include <boost/bind.hpp>
 
 
 using namespace boost;
