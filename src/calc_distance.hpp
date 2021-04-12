@@ -27,7 +27,7 @@ inline float fvecNormL2sqrRef(const float* x, size_t d) {
     return res;
 }
 
-float fvec_inner_product_ref(const float* x, const float* y, size_t d) {
+inline float fvec_inner_product_ref(const float* x, const float* y, size_t d) {
     size_t i;
     float res = 0;
     for (i = 0; i < d; i++)
