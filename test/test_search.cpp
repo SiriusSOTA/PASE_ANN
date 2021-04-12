@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestSearch) {
     Timer t;
     std::vector<size_t> matchCounter(vectorCount, 0);
     for (size_t i = 0; i < vectorCount; ++i) {
-        std::vector<u_int_32> searchVectors = pase.findNearestVectorIds(dataParsed[i], nearestVectorsCount, clusterCountToSelect);
+        std::vector<u_int32_t> searchVectors = pase.findNearestVectorIds(dataParsed[i], nearestVectorsCount, clusterCountToSelect);
         std::map<size_t, bool> answer;
         for (size_t j = 0; j < nearestVectorsCount; ++j){
             answer[searchVectors[j]] = 1;
