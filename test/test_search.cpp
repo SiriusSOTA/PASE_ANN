@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(TestSearch) {
     const size_t epochs = 100;
     const size_t nearestVectorsCount = 100;
     const size_t vectorCount = 1e4;
-    const size_t clusterCountToSelect = 1e3;
+    const size_t clusterCountToSelect = 10;
     const float tol = 1e-4;
 
     BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
