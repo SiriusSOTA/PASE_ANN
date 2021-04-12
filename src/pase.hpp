@@ -12,6 +12,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <unordered_map>
 
 
 template<typename T>
@@ -43,98 +45,13 @@ struct PaseIVFFlat {
         delete curCentroidPage;
     }
 
-    void addCentroid(
-            const std::vector<std::reference_wrapper<const std::vector<T>>> &data,
-            const std::vector<u_int32_t> &ids,
-            const std::vector<T> &centroidVector) {
-        auto *firstDataPage = new DataPage<T>();
-        DataPage<T> *lastDataPage = firstDataPage;
-        auto lastDataElemIt = lastDataPage->tuples.begin();
-        auto endTuplesIt = lastDataPage->getEndTuples(dimension);
-        auto nextIdPtr = (u_int32_t *) &(*endTuplesIt);
-
-        for (size_t i = 0; i < data.size(); ++i) {
-            auto &vec = data[i];
-            lastDataElemIt = std::copy(vec.get().begin(), vec.get().end(), lastDataElemIt);
-            std::memcpy(nextIdPtr, &ids[i], 4);
-            nextIdPtr += 4;
-
-            if (lastDataElemIt == endTuplesIt) {
-                auto newDataPage = new DataPage<T>();
-                lastDataPage->nextPage = newDataPage;
-                lastDataPage = newDataPage;
-                lastDataElemIt = lastDataPage->tuples.begin();
-                endTuplesIt = lastDataPage->getEndTuples(dimension);
-                nextIdPtr = (u_int32_t *) &(*endTuplesIt);
-            }
-        }
-
-        if (!firstCentroidPage) {
-            firstCentroidPage = new CentroidPage<T>();
-            lastCentroidPage = firstCentroidPage;
-            lastCentroidElemIt = firstCentroidPage->tuples.begin();
-        }
-
-        if (lastCentroidElemIt == lastCentroidPage->tuples.end()) {
-            auto newCentroidPage = new CentroidPage<T>();
-            lastCentroidPage->nextPage = newCentroidPage;
-            lastCentroidPage = newCentroidPage;
-            lastCentroidElemIt = lastCentroidPage->tuples.begin();
-        }
-        lastCentroidElemIt->vec = centroidVector;
-        lastCentroidElemIt->vectorCount = data.size();
-        lastCentroidElemIt->firstDataPage = firstDataPage;
-        lastCentroidElemIt += 1;
+    void buildIndex(const std::vector<std::vector<T>> &learnVectors,
+                    const std::vector<std::vector<T>> &baseVectors,
+                    const std::vector<u_int32_t> &ids,
+                    const size_t maxEpochs, const float tol) {
+        train(learnVectors, maxEpochs, tol);
+        add(baseVectors, ids);
     }
-
-    void train(const std::vector<std::vector<T>> &points, const size_t maxEpochs, const float tol) {
-        IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
-
-        // all vectors have the same length
-        for (u_int32_t i = 0; i < data.centroids.size(); ++i) {
-            addCentroid(data.clusters[i], data.idClusters[i], data.centroids[i]);
-        }
-    }
-
-    void add(const std::vector<std::vector<T>> &points) {
-
-        size_t pointsCount = points.size();
-        std::vector<std::vector<u_int32_t>> idClusters(clusterCount);
-        std::vector<float> tempDistances(clusterCount);
-        std::vector<uint32_t> clusterIndexes(pointsCount);
-        std::vector<boost::unique_future<void>> pendingTasks;
-        auto &threadPool = getThreadPool();
-
-        for (size_t pId = 0; pId < pointsCount; ++pId) {
-            const std::vector<T> &point = points[pId];
-            auto findClosestCentroid = [this, &point, pId, &clusterIndexes]() {
-                size_t clustersLeft = clusterCount;
-                std::vector<float> currDistances(clusterCount);
-
-                for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
-                    size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
-
-                    for (size_t i = 0; i < centroidCountOnPage; ++i) {
-                        const auto &centroid = pg->tuples[i];
-                        currDistances[clusterCount - clustersLeft + i] = distanceCounter(centroid.vec.data(),
-                                                                                         point.data(), dimension);
-                    }
-                    clustersLeft -= centroidCountOnPage;
-                }
-
-                size_t minClusterIndex = std::distance(currDistances.begin(),
-                                                       std::min_element(currDistances.begin(), currDistances.end()));
-                clusterIndexes[pId] = minClusterIndex;
-            };
-
-            Task task(findClosestCentroid);
-            boost::unique_future<void> fut = task.get_future();
-            pendingTasks.push_back(std::move(fut));
-            threadPool.Submit(std::move(task));
-        }
-        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
-    }
-
 
     std::vector<std::vector<T>>
     findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
@@ -160,7 +77,141 @@ struct PaseIVFFlat {
         return result;
     }
 
+// TODO: make methods private and remove tests
+    void addCentroid(const std::vector<T> &centroidVector) {
+        if (!firstCentroidPage) {
+            firstCentroidPage = new CentroidPage<T>();
+            lastCentroidPage = firstCentroidPage;
+            lastCentroidElemIt = firstCentroidPage->tuples.begin();
+        }
+
+        if (lastCentroidElemIt == lastCentroidPage->tuples.end()) {
+            auto newCentroidPage = new CentroidPage<T>();
+            lastCentroidPage->nextPage = newCentroidPage;
+            lastCentroidPage = newCentroidPage;
+            lastCentroidElemIt = lastCentroidPage->tuples.begin();
+        }
+        lastCentroidElemIt->vec = centroidVector;
+        lastCentroidElemIt += 1;
+    }
+
+
+    void addData(const std::vector<std::reference_wrapper<const std::vector<T>>> &data,
+                 const std::vector<u_int32_t> &ids, CentroidTuple<T> *centroidInfo) {
+        auto lastDataPage = findLastDataPage(centroidInfo);
+        if (lastDataPage == nullptr) {
+            auto *firstDataPage = new DataPage<T>();
+            centroidInfo->firstDataPage = firstDataPage;
+            lastDataPage = firstDataPage;
+        }
+        centroidInfo->vectorCount = data.size();
+
+        auto lastDataElemIt = lastDataPage->tuples.begin();
+        auto endTuplesIt = lastDataPage->getEndTuples(dimension);
+        auto nextIdPtr = (u_int32_t *) &(*endTuplesIt);
+
+        for (size_t i = 0; i < data.size(); ++i) {
+            if (lastDataElemIt == endTuplesIt) {
+                auto newDataPage = new DataPage<T>();
+                lastDataPage->nextPage = newDataPage;
+                lastDataPage = newDataPage;
+                lastDataElemIt = lastDataPage->tuples.begin();
+                endTuplesIt = lastDataPage->getEndTuples(dimension);
+                nextIdPtr = (u_int32_t *) &(*endTuplesIt);
+            }
+
+            auto &vec = data[i];
+            lastDataElemIt = std::copy(vec.get().begin(), vec.get().end(), lastDataElemIt);
+            std::memcpy(nextIdPtr, &ids[i], 4);
+            nextIdPtr += 4;
+        }
+    }
+
 private:
+    std::vector<CentroidTuple<T> *> findClusterIdToPointer() const {
+        std::vector<CentroidTuple<T> *> clusterIdToPointer(clusterCount);
+        CentroidPage<T> *curCentroidPage = firstCentroidPage;
+        size_t idx = 0;
+
+        while (idx != clusterCount) {
+            for (auto &centroidInfo: curCentroidPage->tuples) {
+                clusterIdToPointer[idx] = &centroidInfo;
+                ++idx;
+                if (idx == clusterCount) {
+                    return clusterIdToPointer;
+                }
+            }
+            curCentroidPage = curCentroidPage->nextPage;
+        }
+        return clusterIdToPointer;
+    }
+
+    DataPage<T> *findLastDataPage(const CentroidTuple<T> *centroidInfo) {
+        auto curDataPage = centroidInfo->firstDataPage;
+        while (curDataPage != nullptr && curDataPage->hasNextPage()) {
+            curDataPage = curDataPage->nextPage;
+        }
+        return curDataPage;
+    }
+
+    void train(const std::vector<std::vector<T>> &points, const size_t maxEpochs, const float tol) {
+        IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
+        for (u_int32_t i = 0; i < data.centroids.size(); ++i) {
+            addCentroid(data.centroids[i]);
+        }
+    }
+
+    void add(const std::vector<std::vector<T>> &points, const std::vector<u_int32_t> &ids) {
+        const auto clusterIdToPointer = findClusterIdToPointer();
+
+        size_t pointsCount = points.size();
+        std::vector<std::vector<u_int32_t>> idClusters(clusterCount);
+        std::vector<uint32_t> clusterIndexes(pointsCount);
+        std::vector<boost::unique_future<void>> pendingTasks;
+        auto &threadPool = getThreadPool();
+
+        for (size_t pId = 0; pId < pointsCount; ++pId) {
+            const std::vector<T> &point = points[pId];
+            auto findClosestCentroid = [this, &point, pId, &clusterIndexes]() {
+                size_t clustersLeft = clusterCount;
+                size_t closestClusterIndex = 0;
+                float minDistance = std::numeric_limits<float>::max();
+
+                for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
+                    size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
+
+                    for (size_t i = 0; i < centroidCountOnPage; ++i) {
+                        const auto &centroid = pg->tuples[i];
+                        auto curDistance = distanceCounter(centroid.vec.data(), point.data(), dimension);
+                        if (minDistance > curDistance) {
+                            minDistance = curDistance;
+                            closestClusterIndex = i;
+                        }
+                    }
+                    clustersLeft -= centroidCountOnPage;
+                }
+                clusterIndexes[pId] = closestClusterIndex;
+            };
+
+            Task task(findClosestCentroid);
+            findClosestCentroid();
+            boost::unique_future<void> fut = task.get_future();
+            pendingTasks.push_back(std::move(fut));
+            threadPool.Submit(std::move(task));
+        }
+        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
+
+        std::unordered_map<size_t, std::vector<std::reference_wrapper<const std::vector<T>>>> centroidToPoints;
+        std::unordered_map<u_int32_t, std::vector<u_int32_t>> centroidToVectorIds;
+        for (size_t i = 0; i < points.size(); ++i) {
+            centroidToPoints[clusterIndexes[i]].push_back(std::cref(points[i]));
+            centroidToVectorIds[clusterIndexes[i]].push_back(ids[i]);
+        }
+        for (size_t i = 0; i < clusterCount; ++i) {
+            addData(centroidToPoints[i], centroidToVectorIds[i], clusterIdToPointer[i]);
+        }
+    }
+
     std::vector<std::pair<std::vector<T>, u_int32_t>>
     search(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;

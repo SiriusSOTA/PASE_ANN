@@ -11,10 +11,10 @@ BOOST_AUTO_TEST_SUITE(CentroidBuild)
 
     BOOST_AUTO_TEST_CASE(JustWorks) {
         const std::vector<std::vector<float>> data = {{1,  1},
-                                                            {1,  2},
-                                                            {3,  1},
-                                                            {9,  9},
-                                                            {10, 9}};
+                                                      {1,  2},
+                                                      {3,  1},
+                                                      {9,  9},
+                                                      {10, 9}};
         size_t clusterCount = 2;
         size_t epochs = 5;
         float tol = 1e-4;
@@ -34,7 +34,9 @@ BOOST_AUTO_TEST_SUITE(CentroidBuild)
         Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
         const std::vector<std::vector<float>> parsed = parser.parse();
         Timer t;
-        pase.train(parsed, epochs, tol);
+        std::vector<u_int32_t> ids(parsed.size());
+        std::iota(ids.begin(), ids.end(), 0);
+        pase.buildIndex(parsed, parsed, ids, epochs, tol);
         std::cout << "KMeans done in " << t.elapsed() << " seconds" << std::endl;
     }
 

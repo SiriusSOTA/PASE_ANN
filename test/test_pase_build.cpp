@@ -20,9 +20,12 @@ BOOST_AUTO_TEST_SUITE(TestPages)
         std::vector<std::reference_wrapper<const std::vector<float>>> postparsed(parsed.begin(), parsed.end());
         std::vector<u_int32_t> ids(postparsed.size());
         std::iota(ids.begin(), ids.end(), 0);
+
         for (size_t i = 0; i < centroidTuplesPerPage + 100; ++i) {
-            pase.addCentroid(postparsed, ids, parsed[i]);
+            pase.addCentroid(postparsed[i]);
         }
+        CentroidTuple<float> *firstCentroidTuple = &pase.firstCentroidPage->tuples[0];
+        pase.addData(postparsed, ids, firstCentroidTuple);
 
         BOOST_TEST(pase.firstCentroidPage->tuples[0].vec == parsed[0]);
 
