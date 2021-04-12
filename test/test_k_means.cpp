@@ -10,7 +10,7 @@
 BOOST_AUTO_TEST_SUITE(CentroidBuild)
 
     BOOST_AUTO_TEST_CASE(JustWorks) {
-        const std::vector<const std::vector<float>> data = {{1,  1},
+        const std::vector<std::vector<float>> data = {{1,  1},
                                                             {1,  2},
                                                             {3,  1},
                                                             {9,  9},
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_SUITE(CentroidBuild)
 
         PaseIVFFlat<float> pase(dimension, clusterCount);
         Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
-        const std::vector<const std::vector<float>> parsed = parser.parse();
+        const std::vector<std::vector<float>> parsed = parser.parse();
         Timer t;
         pase.train(parsed, epochs, tol);
         std::cout << "KMeans done in " << t.elapsed() << " seconds" << std::endl;

@@ -12,7 +12,7 @@
 inline float fvecL2sqrRef(const float* x, const float* y, size_t d) {
     size_t i;
     float res = 0;
-    for (i = 0; i < d; i++) {
+    for (i = 0; i < d; ++i) {
         const float tmp = x[i] - y[i];
         res += tmp * tmp;
     }
@@ -22,12 +22,12 @@ inline float fvecL2sqrRef(const float* x, const float* y, size_t d) {
 inline float fvecNormL2sqrRef(const float* x, size_t d) {
     size_t i;
     double res = 0;
-    for (i = 0; i < d; i++)
+    for (i = 0; i < d; ++i)
         res += x[i] * x[i];
     return res;
 }
 
-inline float fvec_inner_product_ref(const float* x, const float* y, size_t d) {
+inline float fvecInnerProductRef(const float* x, const float* y, size_t d) {
     size_t i;
     float res = 0;
     for (i = 0; i < d; i++)
@@ -248,7 +248,7 @@ float fvecNormL2sqr(const float* x, size_t d) {
 #else
 // scalar implementation
 
-float fvecL2sqr(const float* x, const float* y, size_t d) {
+inline float fvecL2sqr(const float* x, const float* y, size_t d) {
     return fvecL2sqrRef(x, y, d);
 }
 
@@ -256,7 +256,7 @@ float fvecInnerProduct(const float* x, const float* y, size_t d) {
     return fvecInnerProductRef(x, y, d);
 }
 
-float fvecNormL2sqr(const float* x, size_t d) {
+inline float fvecNormL2sqr(const float* x, size_t d) {
     return fvecNormL2sqrRef(x, d);
 }
 #endif

@@ -16,8 +16,8 @@ public:
     explicit Parser(std::string pathToFile, size_t dimension, size_t vectorCount)
             : pathToFile(std::move(pathToFile)), dimension(dimension), vectorCount(vectorCount) {}
 
-    std::vector<const std::vector<T>> parse() {
-        std::vector<const std::vector<T>> result;
+    std::vector<std::vector<T>> parse() {
+        std::vector<std::vector<T>> result;
         std::ifstream data(pathToFile, std::ios::binary);
         if (!data.is_open()) {
             throw std::runtime_error("Failed to open file '" + pathToFile + "'.");

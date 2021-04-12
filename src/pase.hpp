@@ -87,7 +87,7 @@ struct PaseIVFFlat {
         lastCentroidElemIt += 1;
     }
 
-    void train(const std::vector<const std::vector<T>> &points, const size_t maxEpochs, const float tol) {
+    void train(const std::vector<std::vector<T>> &points, const size_t maxEpochs, const float tol) {
         IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
 
         // all vectors have the same length
@@ -104,7 +104,7 @@ struct PaseIVFFlat {
         std::vector<std::vector<u_int32_t>> idClusters(clusterCount);
         for (size_t p = 0; p < pointsCount; ++p) {
             for (size_t cl = 0; cl < clusterCount; ++cl) {
-                //TODO: IMPLEMENT THIS!
+
             }
         }
     }
@@ -238,3 +238,4 @@ private:
     }
 
 };
+

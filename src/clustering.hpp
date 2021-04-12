@@ -62,7 +62,7 @@ float distance(const std::vector<T> &x, const std::vector<U> &y) {
 //TODO: kmeans++ initialization support
 template<typename T>
 std::vector<std::vector<T>>
-kMeansSample(const std::vector<const std::vector<T>> &points, const size_t clusterCount,
+kMeansSample(const std::vector<std::vector<T>> &points, const size_t clusterCount,
              const kMeansSamplingMode mode) {
     if (clusterCount == 0) {
         return std::vector<std::vector<T>>();
@@ -109,7 +109,7 @@ kMeansSample(const std::vector<const std::vector<T>> &points, const size_t clust
 }
 
 template<typename T>
-void assignPoints(const std::vector<std::vector<float>> &centroids, const std::vector<const std::vector<T>> &points,
+void assignPoints(const std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
                   std::vector<float> &minSquaredDist,
                   std::vector<u_int32_t> &cluster) {
 
@@ -138,7 +138,7 @@ void assignPoints(const std::vector<std::vector<float>> &centroids, const std::v
 }
 
 template<typename T>
-float computePoints(std::vector<std::vector<float>> &centroids, const std::vector<const std::vector<T>> &points,
+float computePoints(std::vector<std::vector<float>> &centroids, const std::vector<std::vector<T>> &points,
                     std::vector<float> &minSquaredDist,
                     std::vector<u_int32_t> &cluster) {
     // updating and computing
@@ -171,7 +171,7 @@ float computePoints(std::vector<std::vector<float>> &centroids, const std::vecto
 
 template<typename T>
 IVFFlatClusterData<T>
-kMeans(const std::vector<const std::vector<T>> &points, const size_t clusterCount, const size_t maxEpochs,
+kMeans(const std::vector<std::vector<T>> &points, const size_t clusterCount, const size_t maxEpochs,
        const float tol) {
 
     std::vector<u_int32_t> pointsId(points.size(), 0);
@@ -208,3 +208,4 @@ kMeans(const std::vector<const std::vector<T>> &points, const size_t clusterCoun
 
     return std::move(data);
 }
+
