@@ -96,17 +96,43 @@ struct PaseIVFFlat {
         }
     }
 
-    void add(const std::vector<std::vector<T>> &points, const std::vector<std::vector<T>> *clusters) {
-        if (clusters->size() != clusterCount) {
-            throw std::runtime_error("Inconsistent cluster size!");
-        }
+    void add(const std::vector<std::vector<T>> &points) {
+
         size_t pointsCount = points.size();
         std::vector<std::vector<u_int32_t>> idClusters(clusterCount);
-        for (size_t p = 0; p < pointsCount; ++p) {
-            for (size_t cl = 0; cl < clusterCount; ++cl) {
+        std::vector<float> tempDistances(clusterCount);
+        std::vector<uint32_t> clusterIndexes(pointsCount);
+        std::vector<boost::unique_future<void>> pendingTasks;
+        auto &threadPool = getThreadPool();
 
-            }
+        for (size_t pId = 0; pId < pointsCount; ++pId) {
+            const std::vector<T> &point = points[pId];
+            auto findClosestCentroid = [this, &point, pId, &clusterIndexes]() {
+                size_t clustersLeft = clusterCount;
+                std::vector<float> currDistances(clusterCount);
+
+                for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
+                    size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
+
+                    for (size_t i = 0; i < centroidCountOnPage; ++i) {
+                        const auto &centroid = pg->tuples[i];
+                        currDistances[clusterCount - clustersLeft + i] = distanceCounter(centroid.vec.data(),
+                                                                                         point.data(), dimension);
+                    }
+                    clustersLeft -= centroidCountOnPage;
+                }
+
+                size_t minClusterIndex = std::distance(currDistances.begin(),
+                                                       std::min_element(currDistances.begin(), currDistances.end()));
+                clusterIndexes[pId] = minClusterIndex;
+            };
+
+            Task task(findClosestCentroid);
+            boost::unique_future<void> fut = task.get_future();
+            pendingTasks.push_back(std::move(fut));
+            threadPool.Submit(std::move(task));
         }
+        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
     }
 
 
@@ -142,25 +168,14 @@ private:
 
         std::vector<CentrWithDist> centrDists(clusterCount);
 
-        auto distanceCounter = [](const T *l, const T *r, const size_t dim) {
-            if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
-                return fvecL2sqr(l, r, dim);
-            }
-            float result = 0;
-            for (uint32_t i = 0; i < dim; ++i) {
-                result += static_cast<float>(r[i] - l[i]) * static_cast<float>(r[i] - l[i]);
-            }
-            return sqrtf(result);
-        };
-
-        auto& threadPool = getThreadPool();
+        auto &threadPool = getThreadPool();
         std::vector<boost::unique_future<void>> pendingTasks;
 
         size_t clustersLeft = clusterCount;
         for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
             size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
 
-            auto calcDistsToCentroids = [this, &centrDists, &vec, &distanceCounter, centroidCountOnPage, clustersLeft, pg]() {
+            auto calcDistsToCentroids = [this, &centrDists, &vec, centroidCountOnPage, clustersLeft, pg]() {
                 for (size_t i = 0; i < centroidCountOnPage; ++i) {
                     const auto &centroid = pg->tuples[i];
                     centrDists[clusterCount - clustersLeft + i] = std::move(
@@ -237,5 +252,16 @@ private:
         return result;
     }
 
+private:
+    float distanceCounter(const T *l, const T *r, const size_t dim) {
+        if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
+            return fvecL2sqr(l, r, dim);
+        }
+        float result = 0;
+        for (uint32_t i = 0; i < dim; ++i) {
+            result += static_cast<float>(r[i] - l[i]) * static_cast<float>(r[i] - l[i]);
+        }
+        return sqrtf(result);
+    }
 };
 
