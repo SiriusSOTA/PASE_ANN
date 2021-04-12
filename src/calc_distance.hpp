@@ -77,7 +77,7 @@ inline float fvecNormL2sqr(const float* x, size_t d) {
 
 #ifdef __AVX__
 
-float fvecInnerProduct(const float* x, const float* y, size_t d) {
+inline float fvecInnerProduct(const float* x, const float* y, size_t d) {
     __m256 msum1 = _mm256_setzero_ps();
 
     while (d >= 8) {
@@ -112,7 +112,7 @@ float fvecInnerProduct(const float* x, const float* y, size_t d) {
     return _mm_cvtss_f32(msum2);
 }
 
-float fvecL2sqr(const float* x, const float* y, size_t d) {
+inline float fvecL2sqr(const float* x, const float* y, size_t d) {
     __m256 msum1 = _mm256_setzero_ps();
 
     while (d >= 8) {
@@ -206,7 +206,7 @@ inline float fvecInnerProduct(const float* x, const float* y, size_t d) {
 
 #elif defined(__aarch64__)
 
-float fvecL2sqr(const float* x, const float* y, size_t d) {
+inline float fvecL2sqr(const float* x, const float* y, size_t d) {
     if (d & 3)
         return fvecL2sqr_ref(x, y, d);
     float32x4_t accu = vdupq_n_f32(0);
@@ -220,7 +220,7 @@ float fvecL2sqr(const float* x, const float* y, size_t d) {
     return vdups_laneq_f32(a2, 0) + vdups_laneq_f32(a2, 1);
 }
 
-float fvecInnerProduct(const float* x, const float* y, size_t d) {
+inline float fvecInnerProduct(const float* x, const float* y, size_t d) {
     if (d & 3)
         return fvecInnerProductRef(x, y, d);
     float32x4_t accu = vdupq_n_f32(0);
@@ -233,7 +233,7 @@ float fvecInnerProduct(const float* x, const float* y, size_t d) {
     return vdups_laneq_f32(a2, 0) + vdups_laneq_f32(a2, 1);
 }
 
-float fvecNormL2sqr(const float* x, size_t d) {
+inline float fvecNormL2sqr(const float* x, size_t d) {
     if (d & 3)
         return fvecNormL2sqrRef(x, d);
     float32x4_t accu = vdupq_n_f32(0);
@@ -252,7 +252,7 @@ inline float fvecL2sqr(const float* x, const float* y, size_t d) {
     return fvecL2sqrRef(x, y, d);
 }
 
-float fvecInnerProduct(const float* x, const float* y, size_t d) {
+inline float fvecInnerProduct(const float* x, const float* y, size_t d) {
     return fvecInnerProductRef(x, y, d);
 }
 
