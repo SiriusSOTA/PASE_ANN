@@ -181,9 +181,9 @@ private:
         std::vector<boost::unique_future<void>> pendingTasks;
         auto &threadPool = getThreadPool();
 
-        for (size_t id = 0; id < pointsCount; id += 20000) {
+        for (size_t id = 0; id < pointsCount; id += 50000) {
             auto findClosestCentroid = [this, &points, id, pointsCount, &clusterIndexes]() {
-                for (size_t pId = id; pId < std::min(pointsCount, id + 20000); ++pId) {
+                for (size_t pId = id; pId < std::min(pointsCount, id + 50000); ++pId) {
                     const std::vector<T> &point = points[pId];
                     size_t clustersLeft = clusterCount;
                     size_t closestClusterIndex = 0;

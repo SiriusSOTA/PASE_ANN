@@ -35,7 +35,7 @@ private:
     bool joined_{false};
 };
 
-static ThreadPool& getThreadPool() {
+static ThreadPool &getThreadPool() {
     static ThreadPool threadPool;
     return threadPool;
 }
