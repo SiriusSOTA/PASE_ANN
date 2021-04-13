@@ -190,7 +190,7 @@ kMeans(const std::vector<std::vector<T>> &points, const size_t clusterCount, con
         assignPoints(centroids, points, minSquaredDist, pointsId);
         // recompute points
         float frobeniusNorm = computePoints(centroids, points, minSquaredDist, pointsId);
-        std::cout << frobeniusNorm << std::endl;
+//        std::cout << frobeniusNorm << std::endl;
         if (frobeniusNorm < tol) {
             std::cout << i + 1 << " epochs passed!" << std::endl;
             break;

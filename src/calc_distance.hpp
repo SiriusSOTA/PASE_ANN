@@ -2,6 +2,8 @@
 
 #ifdef __SSE3__
 #include <immintrin.h>
+#include <cassert>
+
 #endif
 
 #ifdef __aarch64__

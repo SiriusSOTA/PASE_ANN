@@ -7,21 +7,27 @@
 class Timer {
 private:
     using clock_t = std::chrono::high_resolution_clock;
-    using second_t = std::chrono::duration<double, std::ratio<1, 1>>;
 
     std::chrono::time_point<clock_t> begin;
+    const std::string actionName;
 
 public:
-    Timer() : begin(clock_t::now()) {
+    Timer(std::string actionName) : begin(clock_t::now()), actionName(std::move(actionName)) {
     }
 
-    void reset() {
-        begin = clock_t::now();
+    ~Timer() {
+        std::cout.precision(10);
+        std::cout << actionName << " took " << std::fixed << elapsed() << " seconds." << std::endl;
     }
 
+private:
     [[nodiscard]] double elapsed() const {
-        return std::chrono::duration_cast<second_t>(clock_t::now() - begin).count();
+        return std::chrono::duration<double, std::micro>(clock_t::now() - begin).count() / 1e6;
     }
+
+//    void reset() {
+//        begin = clock_t::now();
+//    }
 };
 
 template<typename T>

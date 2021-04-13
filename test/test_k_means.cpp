@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(CentroidBuild)
         BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
 
         PaseIVFFlat<float> pase(dimension, clusterCount);
-        Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
+        Parser<float> parser("../../test/test_data/sift_small/siftsmall_base.fvecs", dimension, 10000);
         const std::vector<std::vector<float>> parsed = parser.parse();
         std::vector<u_int32_t> ids(parsed.size());
         std::iota(ids.begin(), ids.end(), 0);

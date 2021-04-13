@@ -1,6 +1,5 @@
 #include "parser.hpp"
 #include "pase.hpp"
-#include "page.hpp"
 #include "utils.hpp"
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
@@ -63,16 +62,16 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
 
         PaseIVFFlat<float> pase(dimension, clusterCount);
 
-        Parser<float> learnDataParser("../../test/test_data/siftsmall_learn.fvecs", dimension, learnVectorCount);
+        Parser<float> learnDataParser("../../test/test_data/sift_small/siftsmall_learn.fvecs", dimension, learnVectorCount);
         const std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
 
-        Parser<float> baseDataParser("../../test/test_data/siftsmall_base.fvecs", dimension, baseVectorCount);
+        Parser<float> baseDataParser("../../test/test_data/sift_small/siftsmall_base.fvecs", dimension, baseVectorCount);
         const std::vector<std::vector<float>> baseData = baseDataParser.parse();
 
-        Parser<float> testParser("../../test/test_data/siftsmall_query.fvecs", dimension, queryVectorCount);
+        Parser<float> testParser("../../test/test_data/sift_small/siftsmall_query.fvecs", dimension, queryVectorCount);
         const std::vector<std::vector<float>> testData = testParser.parse();
 
-        Parser<int> answerParser("../../test/test_data/siftsmall_groundtruth.ivecs", nearestVectorsCount,
+        Parser<int> answerParser("../../test/test_data/sift_small/siftsmall_groundtruth.ivecs", nearestVectorsCount,
                                  queryVectorCount);
         const std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
 
@@ -101,16 +100,16 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
 //
 //        PaseIVFFlat<float> pase(dimension, clusterCount);
 //
-//        Parser<float> learnDataParser("../../test/test_data/sift_learn.fvecs", dimension, learnVectorCount);
+//        Parser<float> learnDataParser("../../test/test_data/sift/sift_learn.fvecs", dimension, learnVectorCount);
 //        const std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
 //
-//        Parser<float> baseDataParser("../../test/test_data/sift_base.fvecs", dimension, baseVectorCount);
+//        Parser<float> baseDataParser("../../test/test_data/sift/sift_base.fvecs", dimension, baseVectorCount);
 //        const std::vector<std::vector<float>> baseData = baseDataParser.parse();
 //
-//        Parser<float> testParser("../../test/test_data/sift_query.fvecs", dimension, queryVectorCount);
+//        Parser<float> testParser("../../test/test_data/sift/sift_query.fvecs", dimension, queryVectorCount);
 //        const std::vector<std::vector<float>> testData = testParser.parse();
 //
-//        Parser<int> answerParser("../../test/test_data/sift_groundtruth.ivecs", nearestVectorsCount,
+//        Parser<int> answerParser("../../test/test_data/sift/sift_groundtruth.ivecs", nearestVectorsCount,
 //                                 queryVectorCount);
 //        const std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
 //

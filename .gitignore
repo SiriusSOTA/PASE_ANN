@@ -37,3 +37,6 @@ cmake-build-*/
 
 # Mac
 .DS_Store
+
+# Heavy test data
+test/test_data/sift/*

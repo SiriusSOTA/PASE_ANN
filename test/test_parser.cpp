@@ -6,7 +6,7 @@ BOOST_AUTO_TEST_SUITE(TestParser)
 
     BOOST_AUTO_TEST_CASE(TestParseFloat)
     {
-        Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", 128, 10000);
+        Parser<float> parser("../../test/test_data/sift_small/siftsmall_base.fvecs", 128, 10000);
         std::vector<std::vector<float>> parsed = parser.parse();
 
         BOOST_TEST(parsed.size() == 10000);

@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_SUITE(TestPages)
         BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
 
         PaseIVFFlat<float> pase(dimension, 20);
-        Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
+        Parser<float> parser("../../test/test_data/sift_small/siftsmall_base.fvecs", dimension, 10000);
         std::vector<std::vector<float>> parsed = parser.parse();
         std::vector<std::reference_wrapper<const std::vector<float>>> postparsed(parsed.begin(), parsed.end());
         std::vector<u_int32_t> ids(postparsed.size());

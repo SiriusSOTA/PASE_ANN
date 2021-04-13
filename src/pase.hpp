@@ -1,10 +1,11 @@
 #pragma once
 
+#include "calc_distance.hpp"
+#include "clustering.hpp"
 #include "page.hpp"
 #include "parser.hpp"
-#include "clustering.hpp"
 #include "thread_pool.hpp"
-#include "calc_distance.hpp"
+#include "utils.hpp"
 
 #include <functional>
 #include <vector>
@@ -49,12 +50,13 @@ struct PaseIVFFlat {
                     const std::vector<std::vector<T>> &baseVectors,
                     const std::vector<u_int32_t> &ids,
                     const size_t maxEpochs, const float tol) {
-        train(learnVectors, maxEpochs, tol);
+        auto centroids = train(learnVectors, maxEpochs, tol);
+        addCentroids(centroids);
         add(baseVectors, ids);
     }
 
     std::vector<std::vector<T>>
-    findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
+    findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
         auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
         auto result = std::vector<std::vector<T>>();
         result.reserve(neighbourCount);
@@ -66,7 +68,7 @@ struct PaseIVFFlat {
     }
 
     std::vector<u_int32_t>
-    findNearestVectorIds(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
+    findNearestVectorIds(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
         auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
         auto result = std::vector<u_int32_t>();
         result.reserve(neighbourCount);
@@ -154,14 +156,21 @@ private:
         return curDataPage;
     }
 
-    void train(const std::vector<std::vector<T>> &points, const size_t maxEpochs, const float tol) {
+    IVFFlatClusterData<T> train(const std::vector<std::vector<T>> &points, const size_t maxEpochs, const float tol) {
+        Timer t("Train");
         IVFFlatClusterData<T> data = kMeans(points, clusterCount, maxEpochs, tol);
+        return data;
+    }
+
+    void addCentroids(IVFFlatClusterData<T> &data) {
+        Timer t("Filling centroid pages");
         for (u_int32_t i = 0; i < data.centroids.size(); ++i) {
             addCentroid(data.centroids[i]);
         }
     }
 
     void add(const std::vector<std::vector<T>> &points, const std::vector<u_int32_t> &ids) {
+        Timer t("Adding base vectors");
         const auto clusterIdToPointer = findClusterIdToPointer();
 
         size_t pointsCount = points.size();
@@ -213,7 +222,8 @@ private:
     }
 
     std::vector<std::pair<std::vector<T>, u_int32_t>>
-    search(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) {
+    search(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
+//        Timer t("Search");
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
         using VecWithDist = std::tuple<const T *, float, u_int32_t>;
 
@@ -285,6 +295,7 @@ private:
             topVectorIdx += cluster->vectorCount;
         }
         boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
+        std::cout << "here 3" << std::endl;
 
         for (VecWithDist &vDist: topVectors) {
             std::get<1>(vDist) = distanceCounter(vec.data(), std::get<0>(vDist), dimension);
@@ -304,7 +315,7 @@ private:
     }
 
 private:
-    float distanceCounter(const T *l, const T *r, const size_t dim) {
+    float distanceCounter(const T *l, const T *r, const size_t dim) const {
         if (std::is_same<float, typename std::remove_cv<T>::type>::value) {
             return fvecL2sqr(l, r, dim);
         }
