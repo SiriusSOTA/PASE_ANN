@@ -1,9 +1,7 @@
-#include "utils.hpp"
 #include "pase.hpp"
 
 #include <boost/test/unit_test.hpp>
 #include <cstdlib>
-#include <iostream>
 #include <vector>
 
 
@@ -33,11 +31,9 @@ BOOST_AUTO_TEST_SUITE(CentroidBuild)
         PaseIVFFlat<float> pase(dimension, clusterCount);
         Parser<float> parser("../../test/test_data/siftsmall_base.fvecs", dimension, 10000);
         const std::vector<std::vector<float>> parsed = parser.parse();
-        Timer t;
         std::vector<u_int32_t> ids(parsed.size());
         std::iota(ids.begin(), ids.end(), 0);
         pase.buildIndex(parsed, parsed, ids, epochs, tol);
-        std::cout << "KMeans done in " << t.elapsed() << " seconds" << std::endl;
     }
 
 //BOOST_AUTO_TEST_CASE(test_centroids_build_int) {
