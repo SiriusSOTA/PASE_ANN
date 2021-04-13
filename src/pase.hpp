@@ -56,7 +56,8 @@ struct PaseIVFFlat {
     }
 
     std::vector<std::vector<T>>
-    findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
+    findNearestVectors(const std::vector<T> &vec, const size_t neighbourCount,
+                       const size_t clusterCountToSelect) const {
         auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
         auto result = std::vector<std::vector<T>>();
         result.reserve(neighbourCount);
@@ -68,7 +69,8 @@ struct PaseIVFFlat {
     }
 
     std::vector<u_int32_t>
-    findNearestVectorIds(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
+    findNearestVectorIds(const std::vector<T> &vec, const size_t neighbourCount,
+                         const size_t clusterCountToSelect) const {
         auto searchResult = search(vec, neighbourCount, clusterCountToSelect);
         auto result = std::vector<u_int32_t>();
         result.reserve(neighbourCount);
@@ -220,13 +222,11 @@ private:
         }
         for (size_t i = 0; i < clusterCount; ++i) {
             addData(centroidToPoints[i], centroidToVectorIds[i], clusterIdToPointer[i]);
-//            std::cout << "Vector count in cluster " << i << ": " << centroidToVectorIds[i].size() << std::endl;
         }
     }
 
     std::vector<std::pair<std::vector<T>, u_int32_t>>
     search(const std::vector<T> &vec, const size_t neighbourCount, const size_t clusterCountToSelect) const {
-//        Timer t("Search");
         using CentrWithDist = std::pair<const CentroidTuple<T> *, float>;
         using VecWithDist = std::tuple<const T *, float, u_int32_t>;
 
@@ -268,33 +268,52 @@ private:
 
         size_t vectorCount = 0;
         for (const CentroidTuple<T> *cluster: topClusters) {
-            vectorCount += cluster->vectorCount;
+            vectorCount += std::min(cluster->vectorCount, neighbourCount);
         }
 
+        // TODO: select more clusters if more data needed
+        if (vectorCount < neighbourCount) {
+            throw std::runtime_error("Vector count from selected clusters is too small.");
+        }
+
+        // Assume clusterCountToSelect * neighbourCount << total vector count from clusterCountToSelect clusters
         std::vector<VecWithDist> topVectors(vectorCount);
         size_t topVectorIdx = 0;
 
         for (const CentroidTuple<T> *cluster: topClusters) {
-            auto getTopVectors = [this, cluster, topVectorIdx, &topVectors]() {
-                auto vectorIdx = topVectorIdx;
+            auto getTopVectors = [this, cluster, topVectorIdx, &topVectors, &vec, neighbourCount]() {
                 size_t vectorsLeft = cluster->vectorCount;
+                auto vectorCountToSelect = std::min(vectorsLeft, neighbourCount);
+                std::vector<VecWithDist> topVectorFromCurrentCluster(vectorsLeft);
+                auto vectorIdxFromCurrentCluster = 0;
+
                 for (const DataPage<T> *pg = cluster->firstDataPage; pg != nullptr; pg = pg->nextPage) {
                     size_t vectorsCountOnPage = std::min(pg->calcVectorCount(dimension), vectorsLeft);
                     auto nextIdPtr = (u_int32_t *) &(*pg->getEndTuples(dimension));
                     vectorsLeft -= vectorsCountOnPage;
                     for (size_t i = 0; i < vectorsCountOnPage; ++i) {
-                        topVectors[vectorIdx] = std::tuple(pg->tuples.data() + i * dimension, 0, *nextIdPtr);
+                        topVectorFromCurrentCluster[vectorIdxFromCurrentCluster] = std::tuple(
+                                pg->tuples.data() + i * dimension,
+                                distanceCounter(vec.data(), pg->tuples.data() + i * dimension, dimension),
+                                *nextIdPtr);
                         nextIdPtr += 4;
-                        ++vectorIdx;
+                        ++vectorIdxFromCurrentCluster;
                     }
                 }
+                std::sort(topVectorFromCurrentCluster.begin(), topVectorFromCurrentCluster.end(),
+                          [](const VecWithDist &lhs, const VecWithDist &rhs) {
+                              return std::get<1>(lhs) < std::get<1>(rhs);
+                          });
+                std::copy(topVectorFromCurrentCluster.begin(),
+                          topVectorFromCurrentCluster.begin() + vectorCountToSelect,
+                          topVectors.begin() + topVectorIdx);
             };
             Task task(getTopVectors);
             boost::unique_future<void> fut = task.get_future();
             pendingTasks.push_back(std::move(fut));
             threadPool.Submit(std::move(task));
 
-            topVectorIdx += cluster->vectorCount;
+            topVectorIdx += std::min(cluster->vectorCount, neighbourCount);
         }
         boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
 
