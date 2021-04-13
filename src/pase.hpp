@@ -181,29 +181,31 @@ private:
         std::vector<boost::unique_future<void>> pendingTasks;
         auto &threadPool = getThreadPool();
 
-        for (size_t pId = 0; pId < pointsCount; ++pId) {
-            const std::vector<T> &point = points[pId];
-            auto findClosestCentroid = [this, &point, pId, &clusterIndexes]() {
-                size_t clustersLeft = clusterCount;
-                size_t closestClusterIndex = 0;
-                size_t centroidId = 0;
-                float minDistance = std::numeric_limits<float>::max();
+        for (size_t id = 0; id < pointsCount; id += 20000) {
+            auto findClosestCentroid = [this, &points, id, pointsCount, &clusterIndexes]() {
+                for (size_t pId = id; pId < std::min(pointsCount, id + 20000); ++pId) {
+                    const std::vector<T> &point = points[pId];
+                    size_t clustersLeft = clusterCount;
+                    size_t closestClusterIndex = 0;
+                    size_t centroidId = 0;
+                    float minDistance = std::numeric_limits<float>::max();
 
-                for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
-                    size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
+                    for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
+                        size_t centroidCountOnPage = std::min(pg->tuples.size(), clustersLeft);
 
-                    for (size_t i = 0; i < centroidCountOnPage; ++i) {
-                        const auto &centroid = pg->tuples[i];
-                        auto curDistance = distanceCounter(centroid.vec.data(), point.data(), dimension);
-                        if (minDistance > curDistance) {
-                            minDistance = curDistance;
-                            closestClusterIndex = centroidId;
+                        for (size_t i = 0; i < centroidCountOnPage; ++i) {
+                            const auto &centroid = pg->tuples[i];
+                            auto curDistance = distanceCounter(centroid.vec.data(), point.data(), dimension);
+                            if (minDistance > curDistance) {
+                                minDistance = curDistance;
+                                closestClusterIndex = centroidId;
+                            }
+                            ++centroidId;
                         }
-                        ++centroidId;
+                        clustersLeft -= centroidCountOnPage;
                     }
-                    clustersLeft -= centroidCountOnPage;
+                    clusterIndexes[pId] = closestClusterIndex;
                 }
-                clusterIndexes[pId] = closestClusterIndex;
             };
 
             Task task(findClosestCentroid);
@@ -221,8 +223,15 @@ private:
             centroidToVectorIds[clusterIndexes[i]].push_back(ids[i]);
         }
         for (size_t i = 0; i < clusterCount; ++i) {
-            addData(centroidToPoints[i], centroidToVectorIds[i], clusterIdToPointer[i]);
+            auto addDataForCentroid = [this, i, &centroidToPoints, &centroidToVectorIds, &clusterIdToPointer]() {
+                addData(centroidToPoints[i], centroidToVectorIds[i], clusterIdToPointer[i]);
+            };
+            Task task(addDataForCentroid);
+            boost::unique_future<void> fut = task.get_future();
+            pendingTasks.push_back(std::move(fut));
+            threadPool.Submit(std::move(task));
         }
+        boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
     }
 
     std::vector<std::pair<std::vector<T>, u_int32_t>>
