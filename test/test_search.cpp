@@ -39,7 +39,7 @@ void testSearch(const PaseIVFFlat<float> &pase,
     auto recall = matched / queryVectorCount / nearestVectorsCount;
     // the rate of the true item in top nearestVectorsCount search results
     std::cout << "Recall metric R1@" << nearestVectorsCount << ": " << recall << std::endl;
-    BOOST_TEST(recall > 0.8);
+    BOOST_TEST(recall > 0.7);
 }
 
 
@@ -83,42 +83,42 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
         testSearch(pase, queryVectorCount, 1, clusterCountToSelect, testData, parsedTestAnswers);
     }
 
-//    BOOST_AUTO_TEST_CASE(ANN_SIFT1M) {
-//        std::cout << "Test ANN_SIFT1M" << std::endl;
-//
-//        const size_t dimension = 128;
-//        const size_t clusterCount = 1000;
-//        const size_t epochs = 100;
-//        const size_t nearestVectorsCount = 100;
-//
-//        const size_t baseVectorCount = 1e6;
-//        const size_t queryVectorCount = 1e3;
-//        const size_t learnVectorCount = 1e4;
-//
-//        const size_t clusterCountToSelect = 10;
-//        const float tol = 1e-4;
-//
-//        PaseIVFFlat<float> pase(dimension, clusterCount);
-//
-//        Parser<float> learnDataParser("../../test/test_data/sift/sift_learn.fvecs", dimension, learnVectorCount);
-//        const std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
-//
-//        Parser<float> baseDataParser("../../test/test_data/sift/sift_base.fvecs", dimension, baseVectorCount);
-//        const std::vector<std::vector<float>> baseData = baseDataParser.parse();
-//
-//        Parser<float> testParser("../../test/test_data/sift/sift_query.fvecs", dimension, queryVectorCount);
-//        const std::vector<std::vector<float>> testData = testParser.parse();
-//
-//        Parser<int> answerParser("../../test/test_data/sift/sift_groundtruth.ivecs", nearestVectorsCount,
-//                                 queryVectorCount);
-//        const std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
-//
-//        std::vector<u_int32_t> ids(baseData.size());
-//        std::iota(ids.begin(), ids.end(), 0);
-//        pase.buildIndex(dataToLearn, baseData, ids, epochs, tol);
-//
-//        testSearch(pase, queryVectorCount, nearestVectorsCount, clusterCountToSelect, testData, parsedTestAnswers);
-//        testSearch(pase, queryVectorCount, 1, clusterCountToSelect, testData, parsedTestAnswers);
-//    }
+    BOOST_AUTO_TEST_CASE(ANN_SIFT1M) {
+        std::cout << "Test ANN_SIFT1M" << std::endl;
+
+        const size_t dimension = 128;
+        const size_t clusterCount = 1000;
+        const size_t epochs = 100;
+        const size_t nearestVectorsCount = 100;
+
+        const size_t baseVectorCount = 1e6;
+        const size_t queryVectorCount = 1e3;
+        const size_t learnVectorCount = 1e4;
+
+        const size_t clusterCountToSelect = 10;
+        const float tol = 1e-4;
+
+        PaseIVFFlat<float> pase(dimension, clusterCount);
+
+        Parser<float> learnDataParser("../../test/test_data/sift/sift_learn.fvecs", dimension, learnVectorCount);
+        const std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
+
+        Parser<float> baseDataParser("../../test/test_data/sift/sift_base.fvecs", dimension, baseVectorCount);
+        const std::vector<std::vector<float>> baseData = baseDataParser.parse();
+
+        Parser<float> testParser("../../test/test_data/sift/sift_query.fvecs", dimension, queryVectorCount);
+        const std::vector<std::vector<float>> testData = testParser.parse();
+
+        Parser<int> answerParser("../../test/test_data/sift/sift_groundtruth.ivecs", nearestVectorsCount,
+                                 queryVectorCount);
+        const std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
+
+        std::vector<u_int32_t> ids(baseData.size());
+        std::iota(ids.begin(), ids.end(), 0);
+        pase.buildIndex(dataToLearn, baseData, ids, epochs, tol);
+
+        testSearch(pase, queryVectorCount, nearestVectorsCount, clusterCountToSelect, testData, parsedTestAnswers);
+        testSearch(pase, queryVectorCount, 1, clusterCountToSelect, testData, parsedTestAnswers);
+    }
 
 BOOST_AUTO_TEST_SUITE_END()
