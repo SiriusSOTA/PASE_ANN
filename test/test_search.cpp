@@ -9,6 +9,7 @@
 #include <functional>
 #include <iostream>
 #include <vector>
+#include <map>
 
 BOOST_AUTO_TEST_SUITE(VectorSearch)
 
@@ -32,15 +33,18 @@ BOOST_AUTO_TEST_CASE(TestSearch) {
     Parser<float> testParser("../../test/test_data/siftsmall_query.fvecs", dimension, vectorCount);
     std::vector<std::vector<float>> parsedTestData = testParser.parse();
 
-    Parser<u_int32_t> answerParser("../../test/test_data/siftsmall_groundtruth.ivecs", nearestVectorsCount, vectorCount);
-    std::vector<std::vector<u_int32_t>> parsedTestAnswers = answerParser.parse();
-    
+    Parser<int> answerParser("../../test/test_data/siftsmall_groundtruth.ivecs", nearestVectorsCount, vectorCount);
+    std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
     Timer t;
     std::vector<size_t> matchCounter(vectorCount, 0);
     for (size_t i = 0; i < vectorCount; ++i) {
         std::vector<u_int32_t> searchVectors = pase.findNearestVectorIds(dataParsed[i], nearestVectorsCount, clusterCountToSelect);
+        std::map<size_t, bool> answer;
         for (size_t j = 0; j < nearestVectorsCount; ++j){
-            if (searchVectors[j] == parsedTestAnswers[i][j])
+            answer[searchVectors[j]] = 1;
+        }
+        for (size_t j = 0; j < nearestVectorsCount; ++j) {
+            if (answer[parsedTestAnswers[i][j]])
                 matchCounter[i]++;
         }
     }
@@ -48,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestSearch) {
     std::cout << "Search done in " << time << " seconds" << std::endl;
     std::cout << "Average running time" << time / vectorCount << std::endl;
     for (size_t i = 0; i < vectorCount; ++i) {
-        std::cout << "match: " << matchCounter[i] << "out of 100" << std::endl;
+        std::cout << "match: " << matchCounter[i] << " out of 100" << std::endl;
     }
 }
 
