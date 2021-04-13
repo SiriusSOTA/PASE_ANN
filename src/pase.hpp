@@ -19,8 +19,8 @@
 
 template<typename T>
 struct PaseIVFFlat {
-    size_t dimension;
-    size_t clusterCount;
+    const size_t dimension;
+    const size_t clusterCount;
 
     CentroidPage<T> *firstCentroidPage = nullptr;
     CentroidPage<T> *lastCentroidPage = nullptr;
@@ -184,6 +184,7 @@ private:
             auto findClosestCentroid = [this, &point, pId, &clusterIndexes]() {
                 size_t clustersLeft = clusterCount;
                 size_t closestClusterIndex = 0;
+                size_t centroidId = 0;
                 float minDistance = std::numeric_limits<float>::max();
 
                 for (CentroidPage<T> *pg = firstCentroidPage; pg != nullptr; pg = pg->nextPage) {
@@ -194,8 +195,9 @@ private:
                         auto curDistance = distanceCounter(centroid.vec.data(), point.data(), dimension);
                         if (minDistance > curDistance) {
                             minDistance = curDistance;
-                            closestClusterIndex = i;
+                            closestClusterIndex = centroidId;
                         }
+                        ++centroidId;
                     }
                     clustersLeft -= centroidCountOnPage;
                 }
@@ -218,6 +220,7 @@ private:
         }
         for (size_t i = 0; i < clusterCount; ++i) {
             addData(centroidToPoints[i], centroidToVectorIds[i], clusterIdToPointer[i]);
+//            std::cout << "Vector count in cluster " << i << ": " << centroidToVectorIds[i].size() << std::endl;
         }
     }
 
@@ -252,7 +255,6 @@ private:
             clustersLeft -= centroidCountOnPage;
         }
         boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
-
 
         //TODO: find/implement a faster way to sort
         std::sort(centrDists.begin(), centrDists.end(), [](const CentrWithDist &lhs, const CentrWithDist &rhs) {
@@ -295,7 +297,6 @@ private:
             topVectorIdx += cluster->vectorCount;
         }
         boost::wait_for_all(pendingTasks.begin(), pendingTasks.end());
-        std::cout << "here 3" << std::endl;
 
         for (VecWithDist &vDist: topVectors) {
             std::get<1>(vDist) = distanceCounter(vec.data(), std::get<0>(vDist), dimension);
