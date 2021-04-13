@@ -26,19 +26,23 @@ BOOST_AUTO_TEST_CASE(TestSearch) {
     BOOST_TEST(Page<CentroidTuple<float>>::calcTuplesSize() == centroidTuplesPerPage);
 
     PaseIVFFlat<float> pase(dimension, clusterCount);
-    Parser<float> dataParser("../../test/test_data/siftsmall_base.fvecs", dimension, vectorCount);
-    std::vector<std::vector<float>> dataParsed = dataParser.parse();
-    pase.train(dataParsed, epochs, tol);
+    Parser<float> learnDataParser("../../test/test_data/siftsmall_learn.fvecs", dimension, vectorCount);
+    std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
+    Parser<float> baseDataParser("../../test/test_data/siftsmall_base.fvecs", dimension, vectorCount);
+    std::vector<std::vector<float>> baseData = baseDataParser.parse();
+    std::vector<u_int32_t> ids(baseData.size());
+    std::iota(ids.begin(), ids.end(), 0);
+    pase.buildIndex(dataToLearn, baseData, ids, epochs, tol);
 
     Parser<float> testParser("../../test/test_data/siftsmall_query.fvecs", dimension, vectorCount);
-    std::vector<std::vector<float>> parsedTestData = testParser.parse();
+    std::vector<std::vector<float>> testData = testParser.parse();
 
     Parser<int> answerParser("../../test/test_data/siftsmall_groundtruth.ivecs", nearestVectorsCount, vectorCount);
     std::vector<std::vector<int>> parsedTestAnswers = answerParser.parse();
     Timer t;
     std::vector<size_t> matchCounter(vectorCount, 0);
     for (size_t i = 0; i < vectorCount; ++i) {
-        std::vector<u_int32_t> searchVectors = pase.findNearestVectorIds(dataParsed[i], nearestVectorsCount, clusterCountToSelect);
+        std::vector<u_int32_t> searchVectors = pase.findNearestVectorIds(testData[i], nearestVectorsCount, clusterCountToSelect);
         std::map<size_t, bool> answer;
         for (size_t j = 0; j < nearestVectorsCount; ++j){
             answer[searchVectors[j]] = 1;

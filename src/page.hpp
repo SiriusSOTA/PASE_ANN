@@ -20,7 +20,7 @@ struct Page {
         return calcTuplesSize() * sizeof(T) / (sizeof(T) * dimension + 4);
     }
 
-    inline bool hasNextPage() const {
+    [[nodiscard]] inline bool hasNextPage() const {
         return nextPage != nullptr;
     }
 
