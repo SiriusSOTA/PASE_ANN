@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 
 #ifdef __SSE3__
 #include <immintrin.h>
