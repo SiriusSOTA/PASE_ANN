@@ -57,7 +57,8 @@ BOOST_AUTO_TEST_SUITE(Profile)
                 }
 
                 std::ofstream file;
-                std::string filename = string_format("../../docs/our_csv/sift_cc%d_k%d.csv", clusterCount, nearestVectorsCount);
+                std::string filename = string_format("../../docs/our_profile/sift_cc%d_k%d.csv", clusterCount,
+                                                     nearestVectorsCount);
                 file.open(filename, std::ofstream::out | std::ofstream::app);
                 if (file.is_open()) {
                     file << ",Selected clusters,\"Build time, s\",\"Query time, ms\",Recall\n";
@@ -107,17 +108,17 @@ BOOST_AUTO_TEST_SUITE(Profile)
                 PaseIVFFlat<float> tempPase(dimension, clusterCount);
                 double buildTime{};
 
-                Parser<float> learnDataParser("../../test/test_data/пift/sift_learn.fvecs", dimension,
+                Parser<float> learnDataParser("../../test/test_data/gist/gist_learn.fvecs", dimension,
                                               learnVectorCount);
                 const std::vector<std::vector<float>> dataToLearn = learnDataParser.parse();
 
-                Parser<float> baseDataParser("../../test/test_data/sift/sift_base.fvecs", dimension, baseVectorCount);
+                Parser<float> baseDataParser("../../test/test_data/gist/gist_base.fvecs", dimension, baseVectorCount);
                 const std::vector<std::vector<float>> baseData = baseDataParser.parse();
 
-                Parser<float> testParser("../../test/test_data/sift/sift_query.fvecs", dimension, queryVectorCount);
+                Parser<float> testParser("../../test/test_data/gist/gist_query.fvecs", dimension, queryVectorCount);
                 const std::vector<std::vector<float>> testData = testParser.parse();
 
-                Parser<u_int32_t> answerParser("../../test/test_data/sift/sift_groundtruth.ivecs", answerDimension,
+                Parser<u_int32_t> answerParser("../../test/test_data/gist/gist_groundtruth.ivecs", answerDimension,
                                                queryVectorCount);
                 const std::vector<std::vector<u_int32_t>> parsedTestAnswers = answerParser.parse();
 
@@ -131,7 +132,8 @@ BOOST_AUTO_TEST_SUITE(Profile)
                 }
 
                 std::ofstream file;
-                std::string filename = string_format("../../docs/our_csv/gist_cc%d_k%d.csv", clusterCount, nearestVectorsCount);
+                std::string filename = string_format("../../docs/our_profile/gist_cc%d_k%d.csv", clusterCount,
+                                                     nearestVectorsCount);
                 file.open(filename, std::ofstream::out | std::ofstream::app);
                 if (file.is_open()) {
                     file << ",Selected clusters,\"Build time, s\",\"Query time, ms\",Recall\n";
@@ -158,4 +160,5 @@ BOOST_AUTO_TEST_SUITE(Profile)
             }
         }
     }
+
 BOOST_AUTO_TEST_SUITE_END()
