@@ -23,7 +23,8 @@ testSearch(const PaseIVFFlat<float> &pase, const size_t queryVectorCount, const 
     auto recall = matched / static_cast<double>(queryVectorCount) / static_cast<double>(nearestVectorsCount);
     // the rate of the true item in top nearestVectorsCount search results
     std::cout << "R1@" << nearestVectorsCount << ": " << recall << std::endl;
-    BOOST_TEST(recall > 0.7);
-    return {query_time, recall};
+    BOOST_TEST(recall > 0.5);
+    // returns query time in mulliseconds
+    return {1000 * query_time, recall};
 }
 
