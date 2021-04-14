@@ -179,8 +179,6 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
                                                                     static_cast<float>(clusterCount));
                     auto[queryTime, recall] = testSearch(pase, queryVectorCount, nearestVectorsCount,
                                                          clusterCountToSelect, testData, parsedTestAnswers);
-
-                    auto[q, r] = testSearch(pase, queryVectorCount, 1, 10, testData, parsedTestAnswers);
                     auto clusterPercentage = static_cast<size_t>(100.0 * clusterCountPart);
                     if (file.is_open()) {
                         file.precision(4);
