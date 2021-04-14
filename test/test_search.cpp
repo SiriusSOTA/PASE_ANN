@@ -8,12 +8,6 @@
 #include <unordered_set>
 #include <numeric>
 
-struct PaseProfileInfo {
-    double buildTime;
-    double queryTime;
-    float recall;
-};
-
 std::pair<double, float> testSearch(const PaseIVFFlat<float> &pase,
                                     const size_t queryVectorCount,
                                     const size_t nearestVectorsCount,
@@ -30,6 +24,7 @@ std::pair<double, float> testSearch(const PaseIVFFlat<float> &pase,
         for (size_t i = 0; i < queryVectorCount; ++i) {
             std::vector<u_int32_t> searchVectors = pase.findNearestVectorIds(testData[i], nearestVectorsCount,
                                                                              clusterCountToSelect);
+
             matchCounter[i] += intersection(searchVectors, parsedTestAnswers[i]);
         }
         query_time = t.elapsed();
@@ -38,7 +33,7 @@ std::pair<double, float> testSearch(const PaseIVFFlat<float> &pase,
     double matched = std::accumulate(matchCounter.begin(), matchCounter.end(), 0.);
     auto recall = matched / static_cast<double>(queryVectorCount) / static_cast<double>(nearestVectorsCount);
     // the rate of the true item in top nearestVectorsCount search results
-    std::cout << "Recall metric R1@" << nearestVectorsCount << ": " << recall << std::endl;
+    std::cout << "R1@" << nearestVectorsCount << ": " << recall << std::endl;
     BOOST_TEST(recall > 0.7);
     return {query_time, recall};
 }
@@ -160,8 +155,6 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
                                                queryVectorCount);
                 const std::vector<std::vector<u_int32_t>> parsedTestAnswers = answerParser.parse();
 
-                const std::vector<u_int32_t> clusterSearchCounts(clusterCountParts.size());
-
                 std::vector<u_int32_t> ids(baseData.size());
                 std::iota(ids.begin(), ids.end(), 0);
 
@@ -176,6 +169,8 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
                 file.open(filename, std::ofstream::out | std::ofstream::app);
                 if (file.is_open()) {
                     file << ",Selected clusters,\"Build time, s\",\"Query time, ms\",Recall\n";
+                } else {
+                    throw std::runtime_error("cannot open file: " + filename);
                 }
                 size_t index = 0;
                 //TODO: почему-то текущий R1@1 у меня не работает
@@ -184,6 +179,8 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
                                                                     static_cast<float>(clusterCount));
                     auto[queryTime, recall] = testSearch(pase, queryVectorCount, nearestVectorsCount,
                                                          clusterCountToSelect, testData, parsedTestAnswers);
+
+                    auto[q, r] = testSearch(pase, queryVectorCount, 1, 10, testData, parsedTestAnswers);
                     auto clusterPercentage = static_cast<size_t>(100.0 * clusterCountPart);
                     if (file.is_open()) {
                         file.precision(4);
@@ -191,8 +188,8 @@ BOOST_AUTO_TEST_SUITE(VectorSearch)
                              << recall << '\n';
                     }
                 }
+                file.close();
             }
         }
     }
-
 BOOST_AUTO_TEST_SUITE_END()
