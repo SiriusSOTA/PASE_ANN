@@ -5,6 +5,8 @@
 #include <chrono>
 #include <unordered_set>
 #include <memory>
+#include <boost/test/unit_test.hpp>
+
 
 class Timer {
 private:
@@ -53,3 +55,4 @@ std::string string_format(const std::string &format, Args ... args) {
     snprintf(buf.get(), size, format.c_str(), args ...);
     return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
+
