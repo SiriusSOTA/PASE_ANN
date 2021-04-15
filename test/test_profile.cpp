@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_SUITE(Profile)
     }
 
     BOOST_AUTO_TEST_CASE(ANN_GIST1M_PROFILE) {
-        profileGist("../../test/test_data/gist/", "../../docs/our_profile");
+        profileGist("../../test/test_data/gist/", "../../docs/our_profile/");
     }
 
 BOOST_AUTO_TEST_SUITE_END()
