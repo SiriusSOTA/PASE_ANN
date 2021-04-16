@@ -1,8 +1,8 @@
 import psycopg2
 import numpy as np
 
-conn = psycopg2.connect(dbname='***', user='***', port=1921, password='***', host='***')
-
+conn = psycopg2.connect(dbname='***', user='***', port=1921,
+                        password='***', host='***')
 
 def fvecs_read(filename):
     fv = np.fromfile(filename, dtype=np.float32)
@@ -19,16 +19,16 @@ def fvecs_read(filename):
 
 
 def fill_table_query():
-    query = "INSERT INTO public.sift_vectors (vector) VALUES "
+    query = "INSERT INTO public.gist_vectors (id, vector) VALUES "
     i = 0
-    for vec in fvecs_read("../../test/test_data/sift/sift_base.fvecs"):
-        query += (',' if i % 10000 != 0 else "") + "('{" + ",".join(vec.astype(str)) + "}')"
+    for vec in fvecs_read("../../test/test_data/gist/gist_base.fvecs"):
+        query += (',' if i % 10000 != 0 else "") + f"({i},'" + "{" + ",".join(vec.astype(str)) + "}')"
         i += 1
         if i % 10000 == 0 and i != 0:
             query += ";"
             cursor.execute(query)
             conn.commit()
-            query = "INSERT INTO public.sift_vectors (vector) VALUES "
+            query = "INSERT INTO public.gist_vectors (id, vector) VALUES "
             print(f"Added {i} vectors")
 
 
