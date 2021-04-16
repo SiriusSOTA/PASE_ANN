@@ -40,3 +40,4 @@ cmake-build-*/
 
 # Heavy test data
 test/test_data/sift/*
+test/test_data/gist/*
