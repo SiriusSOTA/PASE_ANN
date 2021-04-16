@@ -84,26 +84,6 @@ kMeansSample(const std::vector<std::vector<T>> &points, const size_t clusterCoun
             cluster = points[index];
             clustersId.insert(index);
         }
-    } else if (mode == kMeansSamplingMode::kPlusplus) {
-        // epsilon for kMeans distance
-        std::vector<float> sqDistSum(pointsCount, 1e-6);
-
-        // cycling till the end, probas ~ squared distances sum
-        thread_local std::discrete_distribution distanceDistribution(sqDistSum.begin(), sqDistSum.end());
-        for (auto &cluster : clusters) {
-            while (true) {
-                index = distanceDistribution(gen);
-                if (clustersId.count(index) == 0) {
-                    break;
-                }
-            }
-            clustersId.insert(index);
-            cluster = points[index];
-            for (size_t j = 0; j < pointsCount; ++j) {
-                sqDistSum[j] += squaredDistance(points[j], cluster);
-            }
-            distanceDistribution = std::discrete_distribution(sqDistSum.begin(), sqDistSum.end());
-        }
     }
     return clusters;
 }
@@ -178,7 +158,7 @@ kMeans(const std::vector<std::vector<T>> &points, const size_t clusterCount, con
     std::vector<float> minSquaredDist(points.size(), std::numeric_limits<float>::max());
     IVFFlatClusterData<T> data(clusterCount);
 
-    data.centroids = kMeansSample(points, clusterCount, kMeansSamplingMode::kPlusplus);
+    data.centroids = kMeansSample(points, clusterCount, kMeansSamplingMode::kNormal);
 
     std::vector<std::vector<float>> centroids(data.centroids.size());
     for (size_t i = 0; i < centroids.size(); ++i) {

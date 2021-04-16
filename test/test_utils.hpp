@@ -14,3 +14,4 @@ std::pair<double, float> testSearch(const PaseIVFFlat<float> &pase,
 void profileSift(const std::string& siftDir, const std::string& saveDir);
 
 void profileGist(const std::string& gistDir, const std::string& saveDir);
+

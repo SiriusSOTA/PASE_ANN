@@ -2,7 +2,7 @@ project(test_ann_index)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(Boost REQUIRED COMPONENTS system filesystem unit_test_framework)
+find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 link_directories(/src)
 
 #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
